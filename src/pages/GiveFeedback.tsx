@@ -2,19 +2,22 @@ import AppLayout from "@/components/templates/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/molecules/card";
 import { Button } from "@/components/atoms/button";
 import { Textarea } from "@/components/atoms/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/molecules/select";
 import { Label } from "@/components/atoms/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/molecules/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/molecules/command";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Send } from "lucide-react";
+import { Send, ChevronsUpDown, Check } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { cn } from "@/lib/utils";
 
 const GiveFeedback = () => {
   const { profile } = useAuth();
   const queryClient = useQueryClient();
   const [selectedColleague, setSelectedColleague] = useState("");
+  const [comboboxOpen, setComboboxOpen] = useState(false);
   const [content, setContent] = useState("");
 
   const { data: colleagues = [] } = useQuery({
@@ -72,18 +75,52 @@ const GiveFeedback = () => {
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-2">
                 <Label>Select Colleague</Label>
-                <Select value={selectedColleague} onValueChange={setSelectedColleague}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose a colleague..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {filteredColleagues.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>
-                        {c.display_name} — {c.team || "No team"}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Popover open={comboboxOpen} onOpenChange={setComboboxOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={comboboxOpen}
+                      className="w-full justify-between font-normal"
+                    >
+                      {selectedColleague
+                        ? (() => {
+                            const c = filteredColleagues.find((c) => c.id === selectedColleague);
+                            return c ? `${c.display_name} — ${c.team || "No team"}` : "Search for a colleague...";
+                          })()
+                        : "Search for a colleague..."}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                    <Command>
+                      <CommandInput placeholder="Type a name to search..." />
+                      <CommandList>
+                        <CommandEmpty>No colleague found.</CommandEmpty>
+                        <CommandGroup>
+                          {filteredColleagues.map((c) => (
+                            <CommandItem
+                              key={c.id}
+                              value={`${c.display_name} ${c.team || ""}`}
+                              onSelect={() => {
+                                setSelectedColleague(c.id === selectedColleague ? "" : c.id);
+                                setComboboxOpen(false);
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  selectedColleague === c.id ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              {c.display_name} — {c.team || "No team"}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
 
               <div className="space-y-2">

@@ -3,7 +3,9 @@ import { Card, CardContent } from "@/components/molecules/card";
 import { Button } from "@/components/atoms/button";
 import { Avatar, AvatarFallback } from "@/components/atoms/avatar";
 import { Badge } from "@/components/atoms/badge";
-import { ThumbsUp, Check } from "lucide-react";
+import { ThumbsUp, Check, Search } from "lucide-react";
+import { Input } from "@/components/atoms/input";
+import { useState } from "react";
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,9 +39,18 @@ const UpvoteColleagues = () => {
     enabled: !!profile,
   });
 
+  const [searchQuery, setSearchQuery] = useState("");
+
   const upvotedIds = new Set(upvotes.map((u) => u.upvoted_id));
   const remaining = MAX_VOTES - upvotes.length;
-  const filteredColleagues = colleagues.filter((c) => c.id !== profile?.id);
+  const filteredColleagues = colleagues
+    .filter((c) => c.id !== profile?.id)
+    .filter((c) =>
+      searchQuery === ""
+        ? true
+        : c.display_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (c.team || "").toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
   const addUpvote = useMutation({
     mutationFn: async (upvotedId: string) => {
@@ -84,6 +95,16 @@ const UpvoteColleagues = () => {
         <p className="text-sm text-muted-foreground mb-6">
           Recognize colleagues who've made an impact. You have {MAX_VOTES} upvotes to distribute.
         </p>
+
+        <div className="relative mb-4">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search colleagues by name or team..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9"
+          />
+        </div>
 
         <div className="space-y-3">
           {filteredColleagues.map((c) => {

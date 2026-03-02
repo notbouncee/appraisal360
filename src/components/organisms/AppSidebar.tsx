@@ -1,4 +1,5 @@
 import { LayoutDashboard, MessageSquarePlus, ThumbsUp, LogOut } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { NavLink } from "@/components/molecules/NavLink";
 import {
   Sidebar,
@@ -23,6 +24,7 @@ const navItems = [
 
 export function AppSidebar() {
   const { profile, signOut } = useAuth();
+  const navigate = useNavigate();
 
   const initials = profile?.display_name
     ?.split(" ")
@@ -34,10 +36,12 @@ export function AppSidebar() {
     <Sidebar className="border-r border-border">
       <div className="p-5 pb-2">
         <div className="flex items-center gap-2 mb-6">
-          <div className="h-8 w-8 rounded-lg gradient-banner flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-sm">A</span>
-          </div>
-          <span className="font-bold text-lg text-foreground">Appraisal360</span>
+          <button onClick={() => navigate("/")} className="flex items-center gap-2 cursor-pointer">
+            <div className="h-8 w-8 rounded-lg gradient-banner flex items-center justify-center">
+              <span className="text-primary-foreground font-bold text-sm">A</span>
+            </div>
+            <span className="font-bold text-lg text-foreground">Appraisal360</span>
+          </button>
         </div>
         <div className="flex items-center gap-3 mb-4">
           <Avatar className="h-10 w-10">
