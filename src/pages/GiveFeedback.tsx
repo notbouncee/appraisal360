@@ -124,7 +124,7 @@ const GiveFeedback = () => {
               </div>
 
               <div className="space-y-2">
-                <Label>Situation & Impact</Label>
+                <Label>What did this person do that made a difference, and how did it affect you or the team?</Label>
                 <Textarea
                   placeholder="Describe the situation, what the colleague did, and the impact on the team or project..."
                   value={content}
