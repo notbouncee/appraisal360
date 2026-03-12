@@ -62,6 +62,24 @@ SEED_USERS: list[SeedUser] = [
         display_name="John Zhang",
         team="Beta",
     ),
+    SeedUser(
+        email="jules@htx.gov.sg",
+        password="password123",
+        display_name="Jules Ang",
+        team="Beta",
+    ),
+    SeedUser(
+        email="yinyun@htx.gov.sg",
+        password="password123",
+        display_name="Tan Yin Yu",
+        team="Alpha",
+    ),
+    SeedUser(
+        email="vince@htx.gov.sg",
+        password="password123",
+        display_name="Vince Ong",
+        team="Alpha",
+    ),
 ]
 
 

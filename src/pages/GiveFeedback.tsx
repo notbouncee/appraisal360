@@ -85,9 +85,9 @@ const GiveFeedback = () => {
                     >
                       {selectedColleague
                         ? (() => {
-                            const c = filteredColleagues.find((c) => c.id === selectedColleague);
-                            return c ? `${c.display_name} — ${c.team || "No team"}` : "Search for a colleague...";
-                          })()
+                          const c = filteredColleagues.find((c) => c.id === selectedColleague);
+                          return c ? `${c.display_name} — ${c.team || "No team"}` : "Search for a colleague...";
+                        })()
                         : "Search for a colleague..."}
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
@@ -124,12 +124,22 @@ const GiveFeedback = () => {
               </div>
 
               <div className="space-y-2">
-                <Label>What did this person do that made a difference, and how did it affect you or the team?</Label>
+                <Label>Think of one/a few interaction(s) you had with this person.</Label>
+                <p className="text-sm text-muted-foreground">What did they do in that situation that stood out (positively or negatively)? How did it impact you, the team, or the work outcome? What is one thing you'd encourage them to continue or suggest doing differently?</p>
                 <Textarea
-                  placeholder="Describe the situation, what the colleague did, and the impact on the team or project..."
+                  placeholder={`Please provide your response in the following format: 
+
+Situation 1
+• Context: Briefly describe the interaction or situation.
+• What they did: What did the person do that stood out (positively or negatively)?
+• Impact: How did it affect you, the team, or the outcome?
+• Suggestion: What should they continue doing or do differently?
+
+Situation 2 (optional)
+...`}
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
-                  rows={5}
+                  rows={10}
                 />
               </div>
 
