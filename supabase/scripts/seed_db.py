@@ -14,7 +14,7 @@ Requirements
 
 Usage (PowerShell)
   $env:SUPABASE_SERVICE_ROLE_KEY = "<your service role key>"
-  python appraisal360/supabase/scripts/seed.py
+    python supabase/scripts/seed_db.py
 
 Note
 This script uses the Service Role key, which bypasses RLS. Treat it like a secret.
@@ -280,7 +280,16 @@ def _insert_feedback(supabase_url: str, service_role_key: str, rows: list[dict[s
     }
 
     url = f"{rest}/feedback"
-    _request_json("POST", url, headers, body=rows)
+    try:
+        _request_json("POST", url, headers, body=rows)
+    except SupabaseHttpError as err:
+        # Backward compatibility: if the column is not present yet, retry without it.
+        details_text = json.dumps(err.details).lower() if err.details is not None else ""
+        if "is_anonymous" in details_text:
+            fallback_rows = [{k: v for k, v in row.items() if k != "is_anonymous"} for row in rows]
+            _request_json("POST", url, headers, body=fallback_rows)
+            return
+        raise
 
 
 def _upsert_upvotes(supabase_url: str, service_role_key: str, rows: list[dict[str, Any]]) -> None:
@@ -351,16 +360,19 @@ def main(argv: list[str]) -> int:
             "author_id": pid("adrian@htx.gov.sg"),
             "recipient_id": pid("tania@htx.gov.sg"),
             "content": "[seed] Helped unblock PR review. Unblocked the release by reviewing quickly and suggesting clear fixes.",
+            "is_anonymous": False,
         },
         {
             "author_id": pid("john@htx.gov.sg"),
             "recipient_id": pid("tania@htx.gov.sg"),
             "content": "[seed] Great incident write-up. The postmortem was concise and actionable; the follow-ups improved reliability.",
+            "is_anonymous": True,
         },
         {
             "author_id": pid("tania@htx.gov.sg"),
             "recipient_id": pid("adrian@htx.gov.sg"),
             "content": "[seed] Strong mentoring. Helped onboard a new teammate and improved team velocity.",
+            "is_anonymous": False,
         },
     ]
 

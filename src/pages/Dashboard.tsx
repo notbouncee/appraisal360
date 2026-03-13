@@ -19,11 +19,29 @@ const Dashboard = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("feedback")
-        .select("id, content, created_at, author_id")
+        .select("id, content, created_at, author_id, is_anonymous")
         .eq("recipient_id", profile!.id)
         .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data;
+
+      if (!error) return data;
+
+      // Allow older schemas to continue functioning until migrations are applied.
+      if (error.message?.toLowerCase().includes("is_anonymous")) {
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from("feedback")
+          .select("id, content, created_at, author_id")
+          .eq("recipient_id", profile!.id)
+          .order("created_at", { ascending: false });
+
+        if (fallbackError) throw fallbackError;
+
+        return (fallbackData || []).map((item) => ({
+          ...item,
+          is_anonymous: false,
+        }));
+      }
+
+      throw error;
     },
     enabled: !!profile,
   });
@@ -93,6 +111,8 @@ const Dashboard = () => {
               <h2 className="text-xl md:text-2xl font-bold mb-2">{currentCycle.title} {currentCycle.year}</h2>
               <p className="text-sm opacity-80">{currentCycle.description}</p>
             </div>
+            {/*
+            commented out for now - will re-add once we have more cycle states and want to show progress/timeline
             <div className="bg-card/15 backdrop-blur-sm rounded-xl p-4 min-w-[180px]">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-primary-foreground text-sm font-medium">Timeline</span>
@@ -118,6 +138,7 @@ const Dashboard = () => {
                 <span>{format(new Date(currentCycle.end_date), "MMM d")}</span>
               </div>
             </div>
+            */}
           </CardContent>
         </Card>
         )}
@@ -159,8 +180,10 @@ const Dashboard = () => {
         ) : (
           <div className="space-y-4">
             {receivedFeedback.map((item) => {
-              const author = authorMap[item.author_id];
-              const initials = author?.display_name?.split(" ").map((n: string) => n[0]).join("") || "?";
+              const author = item.is_anonymous ? null : authorMap[item.author_id];
+              const initials = item.is_anonymous
+                ? "A"
+                : author?.display_name?.split(" ").map((n: string) => n[0]).join("") || "?";
               return (
                 <Card key={item.id}>
                   <CardContent className="p-5">
@@ -171,10 +194,12 @@ const Dashboard = () => {
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <p className="text-sm font-semibold text-foreground">{author?.display_name || "Unknown"}</p>
+                        <p className="text-sm font-semibold text-foreground">
+                          {item.is_anonymous ? "Anonymous" : author?.display_name || "Unknown"}
+                        </p>
                         <p className="text-xs text-muted-foreground">
                           {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
-                          {author?.team ? ` • ${author.team}` : ""}
+                          {!item.is_anonymous && author?.team ? ` • ${author.team}` : ""}
                         </p>
                       </div>
                     </div>
