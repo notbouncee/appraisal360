@@ -80,6 +80,110 @@ SEED_USERS: list[SeedUser] = [
         display_name="Vince Ong",
         team="Alpha",
     ),
+    SeedUser(
+    email="aaron.tan@htx.gov.sg",
+    password="password123",
+    display_name="Aaron Tan",
+    team="Bravo",
+),
+
+SeedUser(
+    email="benjamin.lim@htx.gov.sg",
+    password="password123",
+    display_name="Benjamin Lim",
+    team="Alpha",
+),
+
+SeedUser(
+    email="charles.ng@htx.gov.sg",
+    password="password123",
+    display_name="Charles Ng",
+    team="Bravo",
+),
+
+SeedUser(
+    email="daniel.ong@htx.gov.sg",
+    password="password123",
+    display_name="Daniel Ong",
+    team="Alpha",
+),
+
+SeedUser(
+    email="ethan.goh@htx.gov.sg",
+    password="password123",
+    display_name="Ethan Goh",
+    team="Bravo",
+),
+
+SeedUser(
+    email="felix.chua@htx.gov.sg",
+    password="password123",
+    display_name="Felix Chua",
+    team="Alpha",
+),
+
+SeedUser(
+    email="gabriel.koh@htx.gov.sg",
+    password="password123",
+    display_name="Gabriel Koh",
+    team="Bravo",
+),
+
+SeedUser(
+    email="henry.lee@htx.gov.sg",
+    password="password123",
+    display_name="Henry Lee",
+    team="Bravo",
+),
+
+SeedUser(
+    email="ivan.teo@htx.gov.sg",
+    password="password123",
+    display_name="Ivan Teo",
+    team="Alpha",
+),
+
+SeedUser(
+    email="jason.tan@htx.gov.sg",
+    password="password123",
+    display_name="Jason Tan",
+    team="Alpha",
+),
+
+SeedUser(
+    email="kevin.lim@htx.gov.sg",
+    password="password123",
+    display_name="Kevin Lim",
+    team="Alpha",
+),
+
+SeedUser(
+    email="leon.ng@htx.gov.sg",
+    password="password123",
+    display_name="Leon Ng",
+    team="Bravo",
+),
+
+SeedUser(
+    email="michael.ong@htx.gov.sg",
+    password="password123",
+    display_name="Michael Ong",
+    team="Alpha",
+),
+
+SeedUser(
+    email="nicholas.goh@htx.gov.sg",
+    password="password123",
+    display_name="Nicholas Goh",
+    team="Bravo",
+),
+
+SeedUser(
+    email="ryan.chua@htx.gov.sg",
+    password="password123",
+    display_name="Ryan Chua",
+    team="Bravo",
+),
 ]
 
 
