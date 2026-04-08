@@ -9,43 +9,62 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useReviewCycles } from "@/hooks/useReviewCycle";
 import { formatDistanceToNow, format } from "date-fns";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/molecules/dialog";
+
+import AppreciationForm from "@/components/organisms/AppreciationForm";
 
 const Dashboard = () => {
   const { profile } = useAuth();
   const { currentCycle, currentStatus, currentProgress, currentDaysLeft, isLoading: cycleLoading } = useReviewCycles();
+  const [page, setPage] = useState(0);
+  const pageSize = 5;
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
 
-  const { data: receivedFeedback = [] } = useQuery({
-    queryKey: ["feedback", "received"],
+  const { data: upvotesResult = { data: [], count: 0 } } = useQuery({
+    queryKey: ["upvotes", "received", page],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("feedback")
-        .select("id, content, created_at, author_id, is_anonymous")
-        .eq("recipient_id", profile!.id)
-        .order("created_at", { ascending: false });
+      const from = page * pageSize;
+      const to = from + pageSize - 1;
+      if (!profile) return { data: [], count: 0 };
 
-      if (!error) return data;
+      const { data,count, error } = await supabase
+        .from("upvotes")
+        .select("*",{ count: "exact" })
+        .order("created_at", { ascending: false })
+        .range(from, to);
 
-      // Allow older schemas to continue functioning until migrations are applied.
-      if (error.message?.toLowerCase().includes("is_anonymous")) {
-        const { data: fallbackData, error: fallbackError } = await supabase
-          .from("feedback")
-          .select("id, content, created_at, author_id")
-          .eq("recipient_id", profile!.id)
-          .order("created_at", { ascending: false });
-
-        if (fallbackError) throw fallbackError;
-
-        return (fallbackData || []).map((item) => ({
-          ...item,
-          is_anonymous: false,
-        }));
-      }
-
-      throw error;
+      if (error) throw error;
+      return { data, count: count ?? 0 };
     },
     enabled: !!profile,
   });
 
+  const { data: feedbackCount = 0 } = useQuery({
+  queryKey: ["feedback-count"],
+  queryFn: async () => {
+    const { count, error } = await supabase
+      .from("feedback")
+      .select("*", { count: "exact", head: true })
+      .eq("recipient_id", profile!.id);
+    if (error) throw error;
+    return count ?? 0;
+  },
+  enabled: !!profile,
+});
+
+  const receivedUpvotes = upvotesResult.data;
+  const totalCount = upvotesResult.count;
+  const totalPages = Math.ceil(totalCount / pageSize);
+  
   const { data: upvoteCount = 0 } = useQuery({
     queryKey: ["upvote-count"],
     queryFn: async () => {
@@ -59,23 +78,28 @@ const Dashboard = () => {
     enabled: !!profile,
   });
 
-  // Fetch author profiles for feedback
-  const authorIds = [...new Set(receivedFeedback.map((f) => f.author_id))];
-  const { data: authors = [] } = useQuery({
-    queryKey: ["authors", authorIds],
+  const voterIds = [...new Set(receivedUpvotes.map((u) => u.voter_id))];
+  const upvotedIds = [...new Set(receivedUpvotes.map((u) => u.upvoted_id))];
+  const allIds = [...new Set([...voterIds, ...upvotedIds])];
+
+  const { data: profiles = [] } = useQuery({
+    queryKey: ["profiles", allIds.sort().join(",")],
     queryFn: async () => {
-      if (authorIds.length === 0) return [];
+      if (allIds.length === 0) return [];
+
       const { data, error } = await supabase
         .from("profiles")
         .select("id, display_name, team")
-        .in("id", authorIds);
+        .in("id", allIds);
+
       if (error) throw error;
       return data;
     },
-    enabled: authorIds.length > 0,
+    enabled: allIds.length > 0,
   });
 
-  const authorMap = Object.fromEntries(authors.map((a) => [a.id, a]));
+  const profileMap = Object.fromEntries(profiles.map((p) => [p.id, p])
+  );
 
   return (
     <AppLayout>
@@ -102,16 +126,16 @@ const Dashboard = () => {
 
         {/* Banner */}
         {currentCycle && (
-        <Card className="gradient-banner border-0 mb-6 overflow-hidden">
-          <CardContent className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="text-primary-foreground">
-              <p className="text-sm opacity-80 mb-1">
-                ● Current Phase: {currentStatus === "active" ? "Feedback Collection" : currentStatus === "upcoming" ? "Upcoming" : "Completed"}
-              </p>
-              <h2 className="text-xl md:text-2xl font-bold mb-2">{currentCycle.title} {currentCycle.year}</h2>
-              <p className="text-sm opacity-80">{currentCycle.description}</p>
-            </div>
-            {/*
+          <Card className="gradient-banner border-0 mb-6 overflow-hidden">
+            <CardContent className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="text-primary-foreground">
+                <p className="text-sm opacity-80 mb-1">
+                  ● Current Phase: {currentStatus === "active" ? "Feedback Collection" : currentStatus === "upcoming" ? "Upcoming" : "Completed"}
+                </p>
+                <h2 className="text-xl md:text-2xl font-bold mb-2">{currentCycle.title} {currentCycle.year}</h2>
+                <p className="text-sm opacity-80">{currentCycle.description}</p>
+              </div>
+              {/*
             commented out for now - will re-add once we have more cycle states and want to show progress/timeline
             <div className="bg-card/15 backdrop-blur-sm rounded-xl p-4 min-w-[180px]">
               <div className="flex items-center justify-between mb-2">
@@ -139,8 +163,8 @@ const Dashboard = () => {
               </div>
             </div>
             */}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
         )}
 
         {/* Stats */}
@@ -164,56 +188,147 @@ const Dashboard = () => {
                 </div>
                 <span className="text-sm text-muted-foreground font-medium">Feedback Received</span>
               </div>
-              <p className="text-3xl font-bold text-foreground">{receivedFeedback.length} <span className="text-sm font-normal text-muted-foreground">responses</span></p>
+              <p className="text-3xl font-bold text-foreground">{feedbackCount} <span className="text-sm font-normal text-muted-foreground">responses</span></p>
             </CardContent>
           </Card>
         </div>
 
         {/* Detailed Feedback */}
-        <h2 className="text-lg font-bold text-foreground mb-4">Detailed Feedback</h2>
-        {receivedFeedback.length === 0 ? (
+        <h2 className="text-lg font-bold text-foreground mb-4">
+          Appreciations
+        </h2>
+        {receivedUpvotes.length === 0 ? (
           <Card>
             <CardContent className="p-8 text-center text-muted-foreground">
-              No feedback received yet. Check back later!
+              No appreciations yet. Check back later!
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-4">
-            {receivedFeedback.map((item) => {
-              const author = item.is_anonymous ? null : authorMap[item.author_id];
-              const initials = item.is_anonymous
-                ? "A"
-                : author?.display_name?.split(" ").map((n: string) => n[0]).join("") || "?";
-              return (
-                <Card key={item.id}>
-                  <CardContent className="p-5">
-                    <div className="flex items-center gap-3 mb-4">
-                      <Avatar className="h-9 w-9">
-                        <AvatarFallback className="bg-accent text-accent-foreground text-xs font-semibold">
-                          {initials}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="text-sm font-semibold text-foreground">
-                          {item.is_anonymous ? "Anonymous" : author?.display_name || "Unknown"}
+          <>
+            {/* LIST */}
+            <div className="space-y-4">
+              {receivedUpvotes.map((item) => {
+                const voter = profileMap[item.voter_id];
+                const upvoted = profileMap[item.upvoted_id];
+
+                const getInitials = (name?: string) =>
+                  name
+                    ?.split(" ")
+                    .map((n: string) => n[0])
+                    .join("") || "?";
+
+                return (
+                  <Card key={item.id}>
+                    <CardContent className="p-5">
+
+                      {/* MAIN ROW */}
+                      <div className="flex items-center gap-6 mb-4">
+
+                        {/* VOTER */}
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-9 w-9">
+                            <AvatarFallback className="bg-accent text-accent-foreground text-xs font-semibold">
+                              {getInitials(voter?.display_name)}
+                            </AvatarFallback>
+                          </Avatar>
+
+                          <div>
+                            <p className="text-sm font-semibold text-foreground">
+                              {voter?.display_name || "Unknown"}
+                            </p>
+
+                            <p className="text-xs text-muted-foreground">
+                              {formatDistanceToNow(new Date(item.created_at), {
+                                addSuffix: true,
+                              })}
+                              {voter?.team ? ` • ${voter.team}` : ""}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* UPVOTED */}
+                        <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                          appreciated
                         </p>
-                        <p className="text-xs text-muted-foreground">
-                          {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
-                          {!item.is_anonymous && author?.team ? ` • ${author.team}` : ""}
-                        </p>
+
+                        <div className="flex items-center gap-3">
+                          <div className="text-right">
+                            <p className="text-sm font-semibold text-foreground">
+                              {upvoted?.display_name || "Unknown"}
+                            </p>
+
+                            {upvoted?.team && (
+                              <p className="text-xs text-muted-foreground">
+                                {upvoted.team}
+                              </p>
+                            )}
+                          </div>
+
+                          <Avatar className="h-9 w-9">
+                            <AvatarFallback className="bg-accent text-accent-foreground text-xs font-semibold">
+                              {getInitials(upvoted?.display_name)}
+                            </AvatarFallback>
+                          </Avatar>
+                        </div>
+
                       </div>
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Situation & Impact</p>
-                      <p className="text-sm text-foreground leading-relaxed whitespace-pre-line">{item.content}</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
+
+                      {/* MESSAGE */}
+                      {item.message && (
+                        <div>
+                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                            Message
+                          </p>
+                          <p className="text-sm text-foreground leading-relaxed whitespace-pre-line">
+                            {item.message}
+                          </p>
+                        </div>
+                      )}
+
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+
+            {/* PAGINATION */}
+            <div className="flex justify-between items-center mt-6">
+              <Dialog open={open} onOpenChange={setOpen}>
+                <DialogTrigger asChild>
+                  <button>Give your Appreciation</button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Give your Appreciation</DialogTitle>
+                  </DialogHeader>
+                  <AppreciationForm onSuccess={() => setOpen(false)} />
+                </DialogContent>
+              </Dialog>
+              <div className="flex justify-end items-center gap-4 mt-6">
+                <button
+                  onClick={() => setPage((p) => Math.max(p - 1, 0))}
+                  disabled={page === 0}
+                  className="text-sm text-muted-foreground disabled:opacity-50"
+                >
+                  Previous
+                </button>
+
+                <p className="text-sm text-muted-foreground">
+                  Page {page + 1} of {totalPages}
+                </p>
+
+                <button
+                  onClick={() => setPage((p) => p + 1)}
+                  disabled={page >= totalPages - 1}  // ← add this
+                  className="text-sm text-muted-foreground disabled:opacity-50"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          </>
         )}
-      </div>
+    </div>
     </AppLayout>
   );
 };

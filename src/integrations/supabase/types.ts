@@ -10,34 +10,43 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.4"
+    PostgrestVersion: "14.1"
   }
   public: {
     Tables: {
       feedback: {
         Row: {
           author_id: string
-          content: string
+          behaviour: string
           created_at: string
           id: string
+          impact: string
           is_anonymous: boolean
+          optional: string | null
           recipient_id: string
+          situation: string
         }
         Insert: {
           author_id: string
-          content: string
+          behaviour: string
           created_at?: string
           id?: string
+          impact: string
           is_anonymous?: boolean
+          optional?: string | null
           recipient_id: string
+          situation: string
         }
         Update: {
           author_id?: string
-          content?: string
+          behaviour?: string
           created_at?: string
           id?: string
+          impact?: string
           is_anonymous?: boolean
+          optional?: string | null
           recipient_id?: string
+          situation?: string
         }
         Relationships: [
           {
@@ -55,42 +64,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      review_cycles: {
-        Row: {
-          id: string
-          year: number
-          quarter: number
-          title: string
-          description: string
-          start_date: string
-          end_date: string
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          year: number
-          quarter: number
-          title: string
-          description?: string
-          start_date: string
-          end_date: string
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          year?: number
-          quarter?: number
-          title?: string
-          description?: string
-          start_date?: string
-          end_date?: string
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: []
       }
       profiles: {
         Row: {
@@ -122,22 +95,61 @@ export type Database = {
         }
         Relationships: []
       }
+      review_cycles: {
+        Row: {
+          created_at: string
+          description: string
+          end_date: string
+          id: string
+          quarter: number
+          start_date: string
+          title: string
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string
+          end_date: string
+          id?: string
+          quarter: number
+          start_date: string
+          title: string
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          end_date?: string
+          id?: string
+          quarter?: number
+          start_date?: string
+          title?: string
+          updated_at?: string
+          year?: number
+        }
+        Relationships: []
+      }
       upvotes: {
         Row: {
           created_at: string
           id: string
+          message: string
           upvoted_id: string
           voter_id: string
         }
         Insert: {
           created_at?: string
           id?: string
+          message: string
           upvoted_id: string
           voter_id: string
         }
         Update: {
           created_at?: string
           id?: string
+          message?: string
           upvoted_id?: string
           voter_id?: string
         }
@@ -163,7 +175,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      ensure_review_cycles: {
+        Args: { target_year?: number }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

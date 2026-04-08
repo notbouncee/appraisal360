@@ -19,7 +19,9 @@ const GiveFeedback = () => {
   const queryClient = useQueryClient();
   const [selectedColleague, setSelectedColleague] = useState("");
   const [comboboxOpen, setComboboxOpen] = useState(false);
-  const [situations, setSituations] = useState([""]);
+  const [situations, setSituations] = useState([
+  { situation: "", behaviour: "", impact: "", optional: "" }
+]);
   const [isAnonymous, setIsAnonymous] = useState(true);
 
   const { data: colleagues = [] } = useQuery({
@@ -36,71 +38,82 @@ const GiveFeedback = () => {
 
   const filteredColleagues = colleagues.filter((c) => c.id !== profile?.id);
 
-  const getStructuredContent = () => {
-    const filledSituations = situations
-      .map((s) => s.trim())
-      .filter((s) => s.length > 0);
-
-    return filledSituations
-      .map((situation, index) => `Situation ${index + 1}\n${situation}`)
-      .join("\n\n");
-  };
-
   const submitMutation = useMutation({
     mutationFn: async () => {
-      const content = getStructuredContent();
-      const payload = {
-        author_id: profile!.id,
-        recipient_id: selectedColleague,
-        content,
-        is_anonymous: isAnonymous,
-      };
-
-      const { error } = await supabase.from("feedback").insert(payload);
-      if (!error) return;
-
-      // Allow older schemas to continue functioning until migrations are applied.
-      if (error.message?.toLowerCase().includes("is_anonymous")) {
-        const { error: fallbackError } = await supabase.from("feedback").insert({
+      const rows = situations
+        .filter(
+          (s) =>
+            s.situation.trim() ||
+            s.behaviour.trim() ||
+            s.impact.trim() ||
+            s.optional.trim()
+        )
+        .map((s) => ({
           author_id: profile!.id,
           recipient_id: selectedColleague,
-          content,
-        });
-        if (fallbackError) throw fallbackError;
-        return;
+          situation: s.situation.trim(),
+          behaviour: s.behaviour.trim(),
+          impact: s.impact.trim(),
+          optional: s.optional.trim(),
+          is_anonymous: isAnonymous,
+        }));
+
+      if (rows.length === 0) {
+        throw new Error("Please fill in at least one situation");
       }
 
-      throw error;
+      const { error } = await supabase.from("feedback").insert(rows);
+
+      if (error) throw error;
     },
+
     onSuccess: () => {
       toast.success("Feedback submitted successfully!");
       setSelectedColleague("");
-      setSituations([""]);
+      setSituations([
+        { situation: "", behaviour: "", impact: "", optional: "" },
+      ]);
       setIsAnonymous(true);
       queryClient.invalidateQueries({ queryKey: ["feedback"] });
     },
+
     onError: (err: any) => toast.error(err.message),
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const hasRequiredSituation = situations[0].trim().length > 0;
+    const hasAtLeastOneValid = situations.some(
+    (s) =>
+      s.situation.trim().length > 0 &&
+      s.behaviour.trim().length > 0 &&
+      s.impact.trim().length > 0
+  );
+    if (!selectedColleague) {
+    toast.error("Please select a colleague");
+    return;
+  }
 
-    if (!selectedColleague || !hasRequiredSituation) {
-      toast.error("Please fill in all fields");
-      return;
-    }
-
+  if (!hasAtLeastOneValid) {
+    toast.error("Please complete all required fields");
+    return;
+  }
     submitMutation.mutate();
   };
 
-  const updateSituation = (index: number, value: string) => {
-    setSituations((prev) => prev.map((item, i) => (i === index ? value : item)));
-  };
+  const updateSituation = (index, field, value) => {
+  setSituations((prev) =>
+    prev.map((item, i) =>
+      i === index ? { ...item, [field]: value } : item
+    )
+  );
+};
 
   const addSituation = () => {
-    setSituations((prev) => [...prev, ""]);
-  };
+  setSituations((prev) => [
+    ...prev,
+    { situation: "", behaviour: "", impact: "", optional: "" },
+  ]);
+};
 
   const removeSituation = (index: number) => {
     setSituations((prev) => prev.filter((_, i) => i !== index));
@@ -174,7 +187,7 @@ const GiveFeedback = () => {
                   Add one mandatory situation, then click + Add Situation if you want to provide more.
                 </p>
 
-                {situations.map((situation, index) => (
+                {situations.map((item, index) => (
                   <div key={`situation-${index}`} className="space-y-2 rounded-lg border p-4">
                     <div className="flex items-center justify-between">
                       <Label>Situation {index + 1}{index === 0 ? " (required)" : ""}</Label>
@@ -191,13 +204,43 @@ const GiveFeedback = () => {
                         </Button>
                       )}
                     </div>
-                    <Textarea
-                      placeholder="Describe the context, what happened, impact, and what to continue or improve."
-                      value={situation}
-                      onChange={(e) => updateSituation(index, e.target.value)}
-                      rows={6}
-                    />
-                  </div>
+                    <div className="space-y-2">
+                      <Label>Briefly explain the situation/interaction you had with this person</Label>
+                      <Textarea
+                        value={item.situation}
+                        onChange={(e) =>
+                          updateSituation(index, "situation", e.target.value)
+                        }
+                      />
+                    </div>
+                    <div className="space-y-2">
+                        <Label>What did they do in that situation that stood out (positively or negatively)?</Label>
+                        <Textarea
+                          value={item.behaviour}
+                          onChange={(e) =>
+                            updateSituation(index, "behaviour", e.target.value)
+                          }
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label>How did it impact you, the team or the work outcome?</Label>
+                        <Textarea
+                          value={item.impact}
+                          onChange={(e) =>
+                            updateSituation(index, "impact", e.target.value)
+                          }
+                        />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>(Optional) What is one thing you'd encourage them to continue or suggest doing differently</Label>
+                      <Textarea
+                        value={item.optional}
+                        onChange={(e) =>
+                          updateSituation(index, "optional", e.target.value)
+                        }
+                      />
+                    </div>
+                </div>
                 ))}
 
                 <Button type="button" variant="outline" onClick={addSituation}>

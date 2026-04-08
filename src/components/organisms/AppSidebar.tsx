@@ -19,7 +19,6 @@ import { useAuth } from "@/hooks/useAuth";
 const navItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Give Feedback", url: "/give-feedback", icon: MessageSquarePlus },
-  { title: "Upvote Colleagues", url: "/upvote-colleagues", icon: ThumbsUp },
 ];
 
 export function AppSidebar() {
