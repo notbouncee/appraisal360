@@ -169,7 +169,10 @@ const Dashboard = () => {
 
         {/* Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-          <Card>
+          <Card
+            onClick={() => navigate("/view-upvotes")}
+            className="cursor-pointer hover:bg-accent/50 hover:shadow-md transition-all duration-200"
+          >
             <CardContent className="p-5">
               <div className="flex items-center gap-3 mb-3">
                 <div className="h-9 w-9 rounded-lg bg-accent flex items-center justify-center">
@@ -180,7 +183,10 @@ const Dashboard = () => {
               <p className="text-3xl font-bold text-foreground">{upvoteCount} <span className="text-sm font-normal text-muted-foreground">from colleagues</span></p>
             </CardContent>
           </Card>
-          <Card>
+          <Card
+            onClick={() => navigate("/view-feedback")}
+            className="cursor-pointer hover:bg-accent/50 hover:shadow-md transition-all duration-200"
+          >
             <CardContent className="p-5">
               <div className="flex items-center gap-3 mb-3">
                 <div className="h-9 w-9 rounded-lg bg-accent flex items-center justify-center">
@@ -206,96 +212,98 @@ const Dashboard = () => {
         ) : (
           <>
             {/* LIST */}
-            <div className="space-y-4">
-              {receivedUpvotes.map((item) => {
-                const voter = profileMap[item.voter_id];
-                const upvoted = profileMap[item.upvoted_id];
+            <div className="w-full max-w-3xl">
+              <div className="space-y-4">
+                {receivedUpvotes.map((item) => {
+                  const voter = profileMap[item.voter_id];
+                  const upvoted = profileMap[item.upvoted_id];
 
-                const getInitials = (name?: string) =>
-                  name
-                    ?.split(" ")
-                    .map((n: string) => n[0])
-                    .join("") || "?";
+                  const getInitials = (name?: string) =>
+                    name
+                      ?.split(" ")
+                      .map((n: string) => n[0])
+                      .join("") || "?";
 
-                return (
-                  <Card key={item.id}>
-                    <CardContent className="p-5">
+                  return (
+                    <Card key={item.id}>
+                      <CardContent className="p-5">
 
-                      {/* MAIN ROW */}
-                      <div className="flex items-center gap-6 mb-4">
+                        {/* MAIN ROW */}
+                        <div className="flex items-center gap-6 mb-4">
 
-                        {/* VOTER */}
-                        <div className="flex items-center gap-3">
-                          <Avatar className="h-9 w-9">
-                            <AvatarFallback className="bg-accent text-accent-foreground text-xs font-semibold">
-                              {getInitials(voter?.display_name)}
-                            </AvatarFallback>
-                          </Avatar>
+                          {/* VOTER */}
+                          <div className="flex items-center gap-3">
+                            <Avatar className="h-9 w-9">
+                              <AvatarFallback className="bg-accent text-accent-foreground text-xs font-semibold">
+                                {getInitials(voter?.display_name)}
+                              </AvatarFallback>
+                            </Avatar>
 
-                          <div>
-                            <p className="text-sm font-semibold text-foreground">
-                              {voter?.display_name || "Unknown"}
-                            </p>
-
-                            <p className="text-xs text-muted-foreground">
-                              {formatDistanceToNow(new Date(item.created_at), {
-                                addSuffix: true,
-                              })}
-                              {voter?.team ? ` • ${voter.team}` : ""}
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* UPVOTED */}
-                        <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
-                          appreciated
-                        </p>
-
-                        <div className="flex items-center gap-3">
-                          <div className="text-right">
-                            <p className="text-sm font-semibold text-foreground">
-                              {upvoted?.display_name || "Unknown"}
-                            </p>
-
-                            {upvoted?.team && (
-                              <p className="text-xs text-muted-foreground">
-                                {upvoted.team}
+                            <div>
+                              <p className="text-sm font-semibold text-foreground">
+                                {voter?.display_name || "Unknown"}
                               </p>
-                            )}
+
+                              <p className="text-xs text-muted-foreground">
+                                {formatDistanceToNow(new Date(item.created_at), {
+                                  addSuffix: true,
+                                })}
+                                {voter?.team ? ` • ${voter.team}` : ""}
+                              </p>
+                            </div>
                           </div>
 
-                          <Avatar className="h-9 w-9">
-                            <AvatarFallback className="bg-accent text-accent-foreground text-xs font-semibold">
-                              {getInitials(upvoted?.display_name)}
-                            </AvatarFallback>
-                          </Avatar>
+                          {/* UPVOTED */}
+                          <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                            appreciated
+                          </p>
+
+                          <div className="flex items-center gap-3">
+                            <div className="text-right">
+                              <p className="text-sm font-semibold text-foreground">
+                                {upvoted?.display_name || "Unknown"}
+                              </p>
+
+                              {upvoted?.team && (
+                                <p className="text-xs text-muted-foreground">
+                                  {upvoted.team}
+                                </p>
+                              )}
+                            </div>
+
+                            <Avatar className="h-9 w-9">
+                              <AvatarFallback className="bg-accent text-accent-foreground text-xs font-semibold">
+                                {getInitials(upvoted?.display_name)}
+                              </AvatarFallback>
+                            </Avatar>
+                          </div>
+
                         </div>
 
-                      </div>
+                        {/* MESSAGE */}
+                        {item.message && (
+                          <div>
+                            <p className="text-sm text-foreground leading-relaxed whitespace-pre-line">
+                              {item.message}
+                            </p>
+                          </div>
+                        )}
 
-                      {/* MESSAGE */}
-                      {item.message && (
-                        <div>
-                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                            Message
-                          </p>
-                          <p className="text-sm text-foreground leading-relaxed whitespace-pre-line">
-                            {item.message}
-                          </p>
-                        </div>
-                      )}
-
-                    </CardContent>
-                  </Card>
-                );
-              })}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
             </div>
 
             {/* PAGINATION */}
             <div className="flex justify-between items-center mt-6">
               <Dialog open={open} onOpenChange={setOpen}>
                 <DialogTrigger asChild>
-                  <button>Give your Appreciation</button>
+                  <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">
+                    <Heart className="h-3.5 w-3.5" />
+                    Give Appreciation
+                  </button>
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
