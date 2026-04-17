@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      appreciation_reactions: {
+        Row: {
+          appreciation_id: string
+          created_at: string
+          emoji: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          appreciation_id: string
+          created_at?: string
+          emoji: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          appreciation_id?: string
+          created_at?: string
+          emoji?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appreciation_reactions_appreciation_id_fkey"
+            columns: ["appreciation_id"]
+            isOneToOne: false
+            referencedRelation: "upvotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appreciation_reactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       feedback: {
         Row: {
           author_id: string

@@ -11,6 +11,7 @@ import ViewFeedback from "./pages/ViewFeedback";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import ViewUpvotes from "./pages/ViewUpvotes";
+import TeamAppreciation from "./pages/TeamAppreciation";
 
 const queryClient = new QueryClient();
 
@@ -27,6 +28,7 @@ const App = () => (
             <Route path="/give-feedback" element={<ProtectedRoute><GiveFeedback /></ProtectedRoute>} />
             <Route path="/view-feedback" element={<ProtectedRoute><ViewFeedback /></ProtectedRoute>} />
             <Route path="/view-upvotes" element={<ProtectedRoute><ViewUpvotes /></ProtectedRoute>} />
+            <Route path="/team-appreciation" element={<ProtectedRoute><TeamAppreciation /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

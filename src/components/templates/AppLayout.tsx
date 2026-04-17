@@ -5,9 +5,10 @@ import { Menu } from "lucide-react";
 
 interface AppLayoutProps {
   children: ReactNode;
+  noPadding?: boolean;
 }
 
-const AppLayout = ({ children }: AppLayoutProps) => {
+const AppLayout = ({ children, noPadding = false }: AppLayoutProps) => {
   return (
     <SidebarProvider>
       <div className="min-h-screen h-full flex w-full">
@@ -18,7 +19,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
               <Menu className="h-5 w-5" />
             </SidebarTrigger>
           </div>
-          <div className="p-6 lg:p-8">{children}</div>
+          <div className={noPadding ? "" : "p-6 lg:p-8"}>{children}</div>
         </main>
       </div>
     </SidebarProvider>
