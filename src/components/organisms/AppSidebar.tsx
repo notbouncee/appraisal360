@@ -19,7 +19,7 @@ import { useAuth } from "@/hooks/useAuth";
 const navItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Give Feedback", url: "/give-feedback", icon: MessageSquarePlus },
-  { title: "xAIP Shoutouts", url: "/team-appreciation", icon: Trophy },
+  { title: "xAIP Appreciations", url: "/team-appreciation", icon: Trophy },
 ];
 
 export function AppSidebar() {
