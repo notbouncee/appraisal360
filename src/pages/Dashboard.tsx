@@ -356,7 +356,7 @@ const Dashboard = () => {
         {/* ── Feedback Tab ── */}
         {activeTab === "feedback" && (
           <>
-            <h2 className="text-lg font-bold text-foreground mb-4">Detailed Feedback</h2>
+            <h2 className="text-lg font-bold text-foreground mb-4">Feedback Received</h2>
             {receivedFeedback.length === 0 ? (
               <Card>
                 <CardContent className="p-8 text-center text-muted-foreground">
