@@ -49,7 +49,7 @@ const AppreciationForm = ({ onSuccess }: { onSuccess?: () => void }) => {
   },
 
   onSuccess: () => {
-    toast.success("Upvote sent!");
+    toast.success("Appreciation sent!");
     setSelectedColleague("");
     setAppreciation("");
     queryClient.invalidateQueries({ queryKey: ["upvotes"] });

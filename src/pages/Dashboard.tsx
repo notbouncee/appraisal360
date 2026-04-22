@@ -243,7 +243,7 @@ const Dashboard = () => {
         {activeTab === "appreciations" && (
           <>
             <div className="w-full max-w-3xl flex items-center justify-between gap-3 mb-4">
-              <h2 className="text-lg font-bold text-foreground">Appreciations</h2>
+              <h2 className="text-lg font-bold text-foreground">Appreciations Received</h2>
               <Dialog open={open} onOpenChange={setOpen}>
                 <DialogTrigger asChild>
                   <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">

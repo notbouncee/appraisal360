@@ -242,7 +242,7 @@ export default function TeamAppreciation() {
                 disabled={!currentUser}
               >
                 <Heart className="h-5 w-5" />
-                Give thanks to someone
+                Give Appreciation
               </Button>
             </div>
           </div>
