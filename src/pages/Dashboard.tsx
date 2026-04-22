@@ -242,7 +242,23 @@ const Dashboard = () => {
         {/* ── Appreciations Tab ── */}
         {activeTab === "appreciations" && (
           <>
-            <h2 className="text-lg font-bold text-foreground mb-4">Appreciations</h2>
+            <div className="w-full max-w-3xl flex items-center justify-between gap-3 mb-4">
+              <h2 className="text-lg font-bold text-foreground">Appreciations</h2>
+              <Dialog open={open} onOpenChange={setOpen}>
+                <DialogTrigger asChild>
+                  <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">
+                    <Heart className="h-3.5 w-3.5" />
+                    Give Appreciation
+                  </button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Give your Appreciation</DialogTitle>
+                  </DialogHeader>
+                  <AppreciationForm onSuccess={() => setOpen(false)} />
+                </DialogContent>
+              </Dialog>
+            </div>
             {receivedUpvotes.length === 0 ? (
               <Card>
                 <CardContent className="p-8 text-center text-muted-foreground">
@@ -310,23 +326,8 @@ const Dashboard = () => {
                   })}
                 </div>
 
-                {/* Pagination + Give Appreciation */}
-                <div className="flex justify-between items-center mt-6">
-                  <Dialog open={open} onOpenChange={setOpen}>
-                    <DialogTrigger asChild>
-                      <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">
-                        <Heart className="h-3.5 w-3.5" />
-                        Give Appreciation
-                      </button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Give your Appreciation</DialogTitle>
-                      </DialogHeader>
-                      <AppreciationForm onSuccess={() => setOpen(false)} />
-                    </DialogContent>
-                  </Dialog>
-
+                {/* Pagination */}
+                <div className="flex justify-end items-center mt-6">
                   <div className="flex items-center gap-4">
                     <button
                       onClick={() => setPage((p) => Math.max(p - 1, 0))}

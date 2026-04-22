@@ -1,4 +1,4 @@
-import { LayoutDashboard, MessageSquarePlus, LogOut } from "lucide-react";
+import { LayoutDashboard, MessageSquarePlus, LogOut, Trophy } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { NavLink } from "@/components/molecules/NavLink";
 import {
@@ -19,6 +19,7 @@ import { useAuth } from "@/hooks/useAuth";
 const navItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Give Feedback", url: "/give-feedback", icon: MessageSquarePlus },
+  { title: "xAIP Shoutouts", url: "/team-appreciation", icon: Trophy },
 ];
 
 export function AppSidebar() {
