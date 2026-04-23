@@ -200,7 +200,7 @@ export default function TeamAppreciation() {
         <div className="border-b bg-card">
           <div className="flex items-center justify-between px-6 py-6 gap-3">
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-semibold">xAIP Appreciation</h1>
+              <h1 className="text-2xl font-semibold">xAIP Appreciations</h1>
             </div>
             <div className="flex items-center gap-2">
               <Button
