@@ -207,11 +207,11 @@ const Dashboard = () => {
                 <div className="h-9 w-9 rounded-lg bg-accent flex items-center justify-center">
                   <Heart className="h-4 w-4 text-primary" />
                 </div>
-                <span className="text-sm text-muted-foreground font-medium">Appreciation</span>
+                <span className="text-sm text-muted-foreground font-medium">Appreciations Received</span>
               </div>
               <p className="text-3xl font-bold text-foreground">
                 {upvoteCount}{" "}
-                <span className="text-sm font-normal text-muted-foreground">from colleagues</span>
+                <span className="text-sm font-normal text-muted-foreground">appreciation(s)</span>
               </p>
             </CardContent>
           </Card>
@@ -233,7 +233,7 @@ const Dashboard = () => {
               </div>
               <p className="text-3xl font-bold text-foreground">
                 {feedbackCount}{" "}
-                <span className="text-sm font-normal text-muted-foreground">responses</span>
+                <span className="text-sm font-normal text-muted-foreground">response(s)</span>
               </p>
             </CardContent>
           </Card>
@@ -301,7 +301,7 @@ const Dashboard = () => {
                             <div className="flex items-center gap-3">
                               <div className="text-right">
                                 <p className="text-sm font-semibold text-foreground">
-                                  {upvoted?.display_name || "Unknown"}
+                                  You
                                 </p>
                                 {upvoted?.team && (
                                   <p className="text-xs text-muted-foreground">{upvoted.team}</p>

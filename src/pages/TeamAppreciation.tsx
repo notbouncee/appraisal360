@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { MoreVertical, Heart } from "lucide-react";
+import { Heart } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import AppLayout from "@/components/templates/AppLayout";
@@ -198,13 +198,21 @@ export default function TeamAppreciation() {
     <AppLayout noPadding>
       <div className="h-screen flex flex-col bg-background">
         <div className="border-b bg-card">
-          <div className="flex items-center justify-between px-6 py-6">
+          <div className="flex items-center justify-between px-6 py-6 gap-3">
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-semibold">Team Appreciation</h1>
+              <h1 className="text-2xl font-semibold">xAIP Appreciation</h1>
             </div>
-            <Button variant="ghost" size="icon">
-              <MoreVertical className="h-5 w-5" />
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={() => setDialogOpen(true)}
+                className="bg-[#5c068c] hover:bg-[#4a0570] text-white gap-2"
+                size="lg"
+                disabled={!currentUser}
+              >
+                <Heart className="h-5 w-5" />
+                Give Appreciation
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -231,20 +239,6 @@ export default function TeamAppreciation() {
                 )}
               </div>
             </ScrollArea>
-          </div>
-
-          <div className="border-t bg-card">
-            <div className="max-w-4xl mx-auto px-6 py-4">
-              <Button
-                onClick={() => setDialogOpen(true)}
-                className="bg-[#5c068c] hover:bg-[#4a0570] text-white gap-2"
-                size="lg"
-                disabled={!currentUser}
-              >
-                <Heart className="h-5 w-5" />
-                Give Appreciation
-              </Button>
-            </div>
           </div>
         </div>
 
