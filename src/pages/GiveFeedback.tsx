@@ -205,7 +205,7 @@ const GiveFeedback = () => {
                       )}
                     </div>
                     <div className="space-y-2">
-                      <Label>Briefly explain the situation/interaction you had with this person</Label>
+                      <Label className="text-xs font-normal text-foreground/80">SITUATION: Briefly explain the situation/interaction you had with this person</Label>
                       <Textarea
                         value={item.situation}
                         onChange={(e) =>
@@ -214,7 +214,7 @@ const GiveFeedback = () => {
                       />
                     </div>
                     <div className="space-y-2">
-                        <Label>What did they do in that situation that stood out (positively or negatively)?</Label>
+                        <Label className="text-xs font-normal text-foreground/80">BEHAVIOUR: What did they do in that situation that stood out (positively or negatively)?</Label>
                         <Textarea
                           value={item.behaviour}
                           onChange={(e) =>
@@ -223,7 +223,7 @@ const GiveFeedback = () => {
                         />
                     </div>
                     <div className="space-y-2">
-                        <Label>How did it impact you, the team or the work outcome?</Label>
+                        <Label className="text-xs font-normal text-foreground/80">IMPACT: How did it impact you, the team or the work outcome?</Label>
                         <Textarea
                           value={item.impact}
                           onChange={(e) =>
@@ -232,7 +232,7 @@ const GiveFeedback = () => {
                         />
                     </div>
                     <div className="space-y-2">
-                      <Label>(Optional) What is one thing you'd encourage them to continue or suggest doing differently</Label>
+                      <Label className="text-xs font-normal text-foreground/80">(Optional) What is one thing you'd encourage them to continue or suggest doing differently</Label>
                       <Textarea
                         value={item.optional}
                         onChange={(e) =>

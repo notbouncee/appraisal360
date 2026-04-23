@@ -242,7 +242,7 @@ const Dashboard = () => {
         {/* ── Appreciations Tab ── */}
         {activeTab === "appreciations" && (
           <>
-            <div className="w-full max-w-3xl flex items-center justify-between gap-3 mb-4">
+            <div className="w-full flex items-center justify-between gap-3 mb-4">
               <h2 className="text-lg font-bold text-foreground">Appreciations Received</h2>
               <Dialog open={open} onOpenChange={setOpen}>
                 <DialogTrigger asChild>
@@ -267,14 +267,14 @@ const Dashboard = () => {
               </Card>
             ) : (
               <>
-                <div className="w-full max-w-3xl space-y-4">
+                <div className="w-full space-y-4">
                   {receivedUpvotes.map((item) => {
                     const voter = profileMap[item.voter_id];
                     const upvoted = profileMap[item.upvoted_id];
                     return (
                       <Card key={item.id}>
                         <CardContent className="p-5">
-                          <div className="flex items-center gap-6 mb-4">
+                          <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-4 mb-4">
                             {/* Voter */}
                             <div className="flex items-center gap-3">
                               <Avatar className="h-9 w-9">
@@ -293,12 +293,12 @@ const Dashboard = () => {
                               </div>
                             </div>
 
-                            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider text-center">
                               appreciated
                             </p>
 
                             {/* Upvoted */}
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-3 justify-self-end">
                               <div className="text-right">
                                 <p className="text-sm font-semibold text-foreground">
                                   You
