@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "appraisal360-database"
+version = "0.1.0"
+description = "Local database tooling for Appraisal360"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "psycopg[binary]==3.2.1",
+]
+
+[project.scripts]
+appraisal360-db-seed = "scripts.seed_postgresql:main"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["scripts*"]
