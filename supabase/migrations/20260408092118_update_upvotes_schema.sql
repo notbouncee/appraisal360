@@ -3,7 +3,7 @@ DELETE FROM public.upvotes;
 
 -- 2. Add message column
 ALTER TABLE public.upvotes
-ADD COLUMN message TEXT;
+ADD COLUMN IF NOT EXISTS message TEXT;
 
 -- 3. Backfill (optional safety)
 UPDATE public.upvotes
@@ -19,6 +19,7 @@ DROP POLICY IF EXISTS "Voters can see own upvotes" ON public.upvotes;
 DROP POLICY IF EXISTS "Recipients can see received upvotes" ON public.upvotes;
 DROP POLICY IF EXISTS "Users can insert upvotes" ON public.upvotes;
 DROP POLICY IF EXISTS "Users can delete own upvotes" ON public.upvotes;
+DROP POLICY IF EXISTS "Public can view all upvotes" ON public.upvotes;
 
 -- 6. New public read policy
 CREATE POLICY "Public can view all upvotes"
