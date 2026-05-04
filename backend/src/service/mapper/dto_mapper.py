@@ -1,7 +1,10 @@
 from datetime import date, datetime
+from uuid import UUID
 
 
 def _serialize(value):
+    if isinstance(value, UUID):
+        return str(value)
     if isinstance(value, (datetime, date)):
         return value.isoformat()
     return value

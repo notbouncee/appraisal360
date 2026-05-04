@@ -5,8 +5,9 @@
 ```sh
 cd database
 uv sync
-cp .env.example .env
-make up
+cp postgresql/.env.example postgresql/.env
+cp rustfs/.env.example rustfs/.env
+make all
 make seed
 ```
 
@@ -14,10 +15,11 @@ make seed
 
 ```sh
 make install
-make up
-make down
-make logs
-make reset
+make all
+make stop
+make restart
+make status
+make clean
 make seed
 make seed-creds
 ```
@@ -36,7 +38,9 @@ uv lock
 
 ## Notes
 
-- `docker-compose.yml` starts PostgreSQL and RustFS for local development.
-- `appraisal360-db-seed` seeds the PostgreSQL schema and demo data from inside the database folder.
+- `postgresql/docker-compose.yml` starts PostgreSQL for local development.
+- `rustfs/docker-compose.yml` starts RustFS for local development.
+- `postgresql/.env` and `rustfs/.env` hold the service-specific local environment values.
+- `make seed` delegates to [backend](../backend), which runs the seed script with `uv run python scripts/seed_postgresql.py`.
 - PostgreSQL is the source of truth for relational data.
 - RustFS (S3-compatible) stores profile images.

@@ -19,17 +19,20 @@ database/
 
 ## Local setup (first implementation slice)
 
-1. Install frontend dependencies at repo root:
+1. Install frontend dependencies inside the frontend package:
 
 ```sh
+cd frontend
 npm install
 ```
 
 2. Prepare local env files:
 
 ```sh
-cp database/.env.example database/.env
+cp database/postgresql/.env.example database/postgresql/.env
+cp database/rustfs/.env.example database/rustfs/.env
 cp backend/.env.example backend/.env
+cp backend/scripts/.env.example backend/scripts/.env
 cp frontend/.env.example frontend/.env
 ```
 
@@ -38,14 +41,16 @@ cp frontend/.env.example frontend/.env
 ```sh
 cd database
 uv sync
-cp .env.example .env
-make up
+cp postgresql/.env.example postgresql/.env
+cp rustfs/.env.example rustfs/.env
+make all
 make seed
 ```
 
 4. Start frontend:
 
 ```sh
+cd frontend
 npm run dev
 ```
 
@@ -55,21 +60,25 @@ npm run dev
 cd backend
 uv sync
 cp .env.example .env
-uv run appraisal360-backend dev
+cp scripts/.env.example scripts/.env
+uv run fastapi run src/main.py --reload
 ```
 
 See [backend/README.md](backend/README.md) for the repo-local backend install and run commands.
 
 ## Service commands
 
-- `npm run infra:up` start PostgreSQL and RustFS
-- `npm run infra:down` stop services
-- `npm run infra:logs` follow container logs
-- `npm run infra:reset` stop and remove volumes
+- `cd database && make all` start PostgreSQL and RustFS
+- `cd database && make stop` stop services
+- `cd database && make restart` restart services
+- `cd database && make status` show service status
+- `cd database && make clean` stop and remove containers and volumes
+- `cd database && make seed` seed PostgreSQL
+- `cd database && make seed-creds` print seed credentials
 
 ## Notes
 
 - `supabase/` is still present for migration reference.
 - Frontend source lives under [frontend/](frontend/).
-- Backend now has its own local package, CLI entrypoint, and Makefile in [backend/](backend/).
-- Database now has its own local package, CLI seed entrypoint, and Makefile in [database/](database/).
+- Backend now has its own local package and a Makefile in [backend/](backend/).
+- Database now has its own local package and Makefile in [database/](database/); its seed flow runs from the backend package via `uv run python scripts/seed_postgresql.py`.

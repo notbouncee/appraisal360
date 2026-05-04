@@ -71,7 +71,7 @@ export function NewAppreciationDialog({
       await onSubmit(selectedUserId, message.trim());
       handleClose(false);
     } catch {
-      // Parent handles Supabase errors/toasts.
+      // Parent handles API errors/toasts.
     } finally {
       setSubmitting(false);
     }

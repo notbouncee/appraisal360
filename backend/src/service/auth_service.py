@@ -14,53 +14,62 @@ class AuthService:
         if existing:
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already exists")
 
-        user = self.user_repo.create_user(email=email, password_hash=hash_password(password), display_name=display_name)
-        token = create_access_token(user_id=user["id"])
+        profile = self.user_repo.create_user(email=email, password_hash=hash_password(password), display_name=display_name)
+        token = create_access_token(user_id=str(profile["id"]))
+
+        profile_payload = {
+            "id": str(profile["id"]),
+            "user_id": str(profile["user_id"]),
+            "display_name": profile["display_name"],
+            "team": profile["team"],
+            "avatar_url": profile["avatar_url"],
+            "role": profile["role"],
+        }
 
         return {
             "access_token": token,
             "token_type": "bearer",
-            "user": {"id": user["id"], "email": user["email"]},
-            "profile": row_to_dict(user["profile"]),
+            "user": {"id": str(profile["id"]), "email": profile["email"]},
+            "profile": row_to_dict(profile_payload),
         }
 
     def signin(self, email: str, password: str) -> dict:
-        user = self.user_repo.get_user_by_email(email)
-        if not user or not verify_password(password, user["password_hash"]):
+        profile = self.user_repo.get_user_by_email(email)
+        if not profile or not verify_password(password, profile["password_hash"]):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
-        token = create_access_token(user_id=str(user["id"]))
-        profile = {
-            "id": user["profile_id_actual"],
-            "user_id": user["user_id"],
-            "display_name": user["display_name"],
-            "team": user["team"],
-            "avatar_url": user["avatar_url"],
-            "role": user["role"],
+        token = create_access_token(user_id=str(profile["id"]))
+        profile_payload = {
+            "id": str(profile["id"]),
+            "user_id": str(profile["user_id"]),
+            "display_name": profile["display_name"],
+            "team": profile["team"],
+            "avatar_url": profile["avatar_url"],
+            "role": profile["role"],
         }
 
         return {
             "access_token": token,
             "token_type": "bearer",
-            "user": {"id": str(user["id"]), "email": user["email"]},
-            "profile": row_to_dict(profile),
+            "user": {"id": str(profile["id"]), "email": profile["email"]},
+            "profile": row_to_dict(profile_payload),
         }
 
     def me(self, user_id: str) -> dict:
-        user = self.user_repo.get_user_by_id(user_id)
-        if not user:
+        profile = self.user_repo.get_user_by_id(user_id)
+        if not profile:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
-        profile = {
-            "id": user["profile_id"],
-            "user_id": user["user_id"],
-            "display_name": user["display_name"],
-            "team": user["team"],
-            "avatar_url": user["avatar_url"],
-            "role": user["role"],
+        profile_payload = {
+            "id": str(profile["id"]),
+            "user_id": str(profile["user_id"]),
+            "display_name": profile["display_name"],
+            "team": profile["team"],
+            "avatar_url": profile["avatar_url"],
+            "role": profile["role"],
         }
 
         return {
-            "user": {"id": str(user["id"]), "email": user["email"]},
-            "profile": row_to_dict(profile),
+            "user": {"id": str(profile["id"]), "email": profile["email"]},
+            "profile": row_to_dict(profile_payload),
         }

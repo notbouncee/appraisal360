@@ -8,6 +8,8 @@ def ensure_schema() -> None:
     CREATE TABLE IF NOT EXISTS public.profiles (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       user_id UUID NOT NULL UNIQUE,
+      email TEXT UNIQUE,
+      password_hash TEXT,
       display_name TEXT NOT NULL DEFAULT '',
       team TEXT NOT NULL DEFAULT '',
       avatar_url TEXT,
@@ -17,15 +19,6 @@ def ensure_schema() -> None:
       created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
       CONSTRAINT profiles_role_check CHECK (role IN ('admin', 'member'))
-    );
-
-    CREATE TABLE IF NOT EXISTS public.app_users (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      email TEXT NOT NULL UNIQUE,
-      password_hash TEXT NOT NULL,
-      profile_id UUID NOT NULL UNIQUE REFERENCES public.profiles(id) ON DELETE CASCADE,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-      updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
 
     CREATE TABLE IF NOT EXISTS public.feedback (
@@ -75,6 +68,10 @@ def ensure_schema() -> None:
     CREATE INDEX IF NOT EXISTS idx_upvotes_upvoted_id ON public.upvotes (upvoted_id);
     CREATE INDEX IF NOT EXISTS idx_upvotes_voter_id ON public.upvotes (voter_id);
 
+    ALTER TABLE IF EXISTS public.profiles ADD COLUMN IF NOT EXISTS email TEXT;
+    ALTER TABLE IF EXISTS public.profiles ADD COLUMN IF NOT EXISTS password_hash TEXT;
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_profiles_email_unique ON public.profiles (email);
+
     CREATE OR REPLACE FUNCTION public.set_updated_at_column()
     RETURNS TRIGGER
     LANGUAGE plpgsql
@@ -88,11 +85,6 @@ def ensure_schema() -> None:
     DROP TRIGGER IF EXISTS update_profiles_updated_at ON public.profiles;
     CREATE TRIGGER update_profiles_updated_at
       BEFORE UPDATE ON public.profiles
-      FOR EACH ROW EXECUTE FUNCTION public.set_updated_at_column();
-
-    DROP TRIGGER IF EXISTS update_app_users_updated_at ON public.app_users;
-    CREATE TRIGGER update_app_users_updated_at
-      BEFORE UPDATE ON public.app_users
       FOR EACH ROW EXECUTE FUNCTION public.set_updated_at_column();
 
     DROP TRIGGER IF EXISTS update_review_cycles_updated_at ON public.review_cycles;
