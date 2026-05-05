@@ -42,6 +42,7 @@ async function request<T>(
   const resp = await fetch(buildUrl(path, options?.query), {
     method,
     headers,
+    credentials: "include",
     body: options?.body ? JSON.stringify(options.body) : undefined,
   });
 
@@ -63,6 +64,40 @@ async function request<T>(
   return (await resp.json()) as T;
 }
 
+async function requestText(
+  method: "GET" | "POST",
+  path: string,
+  options?: { query?: Record<string, string | number | boolean | undefined>; body?: unknown; auth?: boolean },
+): Promise<string> {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (options?.auth) {
+    const token = getAccessToken();
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+  }
+
+  const resp = await fetch(buildUrl(path, options?.query), {
+    method,
+    headers,
+    credentials: "include",
+    body: options?.body ? JSON.stringify(options.body) : undefined,
+  });
+
+  if (!resp.ok) {
+    let detail = "Request failed";
+    try {
+      const parsed = await resp.json();
+      detail = parsed?.detail || parsed?.message || detail;
+    } catch {
+      // ignore parse failure
+    }
+    throw new Error(detail);
+  }
+
+  return await resp.text();
+}
+
 export function apiGet<T>(path: string, query?: Record<string, string | number | boolean | undefined>, auth = false): Promise<T> {
   return request<T>("GET", path, { query, auth });
 }
@@ -77,4 +112,8 @@ export function apiPut<T>(path: string, body?: unknown, auth = false): Promise<T
 
 export function apiDelete<T>(path: string, query?: Record<string, string | number | boolean | undefined>, auth = false): Promise<T> {
   return request<T>("DELETE", path, { query, auth });
+}
+
+export function apiGetText(path: string, query?: Record<string, string | number | boolean | undefined>, auth = false): Promise<string> {
+  return requestText("GET", path, { query, auth });
 }

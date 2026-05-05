@@ -24,6 +24,7 @@ class AuthProfile(BaseModel):
     team: str
     avatar_url: str | None = None
     role: str | None = None
+    must_change_password: bool | None = None
 
 
 class AuthResponse(BaseModel):
@@ -31,6 +32,25 @@ class AuthResponse(BaseModel):
     token_type: str
     user: AuthUser
     profile: AuthProfile
+
+
+class SignInResponse(BaseModel):
+    access_token: str | None = None
+    token_type: str | None = None
+    must_change_password: bool = False
+    password_change_token: str | None = None
+    user: AuthUser
+    profile: AuthProfile
+
+
+class ChangePasswordRequest(BaseModel):
+    token: str
+    new_password: str
+
+
+class RefreshResponse(BaseModel):
+    access_token: str
+    token_type: str
 
 
 class MeResponse(BaseModel):

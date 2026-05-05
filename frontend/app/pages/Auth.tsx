@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { Navigate } from "react-router-dom";
 
 const Auth = () => {
-  const { user, loading, signIn, signUp } = useAuth();
+  const { user, loading, signIn, signUp, mustChangePassword } = useAuth();
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -16,6 +16,7 @@ const Auth = () => {
   const [submitting, setSubmitting] = useState(false);
 
   if (loading) return null;
+  if (mustChangePassword) return <Navigate to="/change-password" replace />;
   if (user) return <Navigate to="/" replace />;
 
   const handleSubmit = async (e: React.FormEvent) => {

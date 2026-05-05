@@ -16,6 +16,7 @@ def ensure_schema() -> None:
       role TEXT NOT NULL DEFAULT 'member',
       must_change_password BOOLEAN NOT NULL DEFAULT TRUE,
       password_changed_at TIMESTAMPTZ,
+      tokens_revoked_at TIMESTAMPTZ,
       created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
       CONSTRAINT profiles_role_check CHECK (role IN ('admin', 'member'))
@@ -63,6 +64,18 @@ def ensure_schema() -> None:
       UNIQUE (year, quarter)
     );
 
+    CREATE TABLE IF NOT EXISTS public.feedback_questions (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      label TEXT NOT NULL,
+      description TEXT NOT NULL DEFAULT '',
+      is_required BOOLEAN NOT NULL DEFAULT TRUE,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      is_active BOOLEAN NOT NULL DEFAULT TRUE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      UNIQUE (label)
+    );
+
     CREATE INDEX IF NOT EXISTS idx_feedback_recipient_id ON public.feedback (recipient_id);
     CREATE INDEX IF NOT EXISTS idx_feedback_author_id ON public.feedback (author_id);
     CREATE INDEX IF NOT EXISTS idx_upvotes_upvoted_id ON public.upvotes (upvoted_id);
@@ -70,6 +83,8 @@ def ensure_schema() -> None:
 
     ALTER TABLE IF EXISTS public.profiles ADD COLUMN IF NOT EXISTS email TEXT;
     ALTER TABLE IF EXISTS public.profiles ADD COLUMN IF NOT EXISTS password_hash TEXT;
+    ALTER TABLE IF EXISTS public.profiles ADD COLUMN IF NOT EXISTS tokens_revoked_at TIMESTAMPTZ;
+    ALTER TABLE IF EXISTS public.feedback_questions ADD COLUMN IF NOT EXISTS description TEXT;
     CREATE UNIQUE INDEX IF NOT EXISTS idx_profiles_email_unique ON public.profiles (email);
 
     CREATE OR REPLACE FUNCTION public.set_updated_at_column()
@@ -91,8 +106,34 @@ def ensure_schema() -> None:
     CREATE TRIGGER update_review_cycles_updated_at
       BEFORE UPDATE ON public.review_cycles
       FOR EACH ROW EXECUTE FUNCTION public.set_updated_at_column();
+
+    DROP TRIGGER IF EXISTS update_feedback_questions_updated_at ON public.feedback_questions;
+    CREATE TRIGGER update_feedback_questions_updated_at
+      BEFORE UPDATE ON public.feedback_questions
+      FOR EACH ROW EXECUTE FUNCTION public.set_updated_at_column();
     """
 
     with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(ddl)
+
+
+def ensure_feedback_questions() -> None:
+    defaults = [
+      ("Situation", "Briefly explain the situation/interaction you had with this person", True, 1, True),
+      ("Behaviour", "What did they do in that situation that stood out (positively or negatively)?", True, 2, True),
+      ("Impact", "How did it impact you, the team or the work outcome?", True, 3, True),
+      ("Additional Comments", "(Optional) What is one thing you'd encourage them to continue or suggest doing differently", False, 4, True),
+    ]
+    sql = """
+    INSERT INTO public.feedback_questions (label, description, is_required, sort_order, is_active)
+    VALUES (%s, %s, %s, %s, %s)
+    ON CONFLICT (label) DO UPDATE SET
+      description = EXCLUDED.description,
+      is_required = EXCLUDED.is_required,
+      sort_order = EXCLUDED.sort_order,
+      is_active = EXCLUDED.is_active
+    """
+    with get_connection() as conn:
+      with conn.cursor() as cur:
+        cur.executemany(sql, defaults)

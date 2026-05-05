@@ -9,6 +9,8 @@ import Dashboard from "./pages/Dashboard";
 import GiveFeedback from "./pages/GiveFeedback";
 import ViewFeedback from "./pages/ViewFeedback";
 import Auth from "./pages/Auth";
+import ChangePassword from "./pages/ChangePassword";
+import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 import ViewUpvotes from "./pages/ViewUpvotes";
 import TeamAppreciation from "./pages/TeamAppreciation";
@@ -24,6 +26,8 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/auth" element={<Auth />} />
+            <Route path="/change-password" element={<ChangePassword />} />
+            <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
             <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/give-feedback" element={<ProtectedRoute><GiveFeedback /></ProtectedRoute>} />
             <Route path="/view-feedback" element={<ProtectedRoute><ViewFeedback /></ProtectedRoute>} />

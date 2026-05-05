@@ -1,8 +1,25 @@
-import { apiDelete, apiGet, apiPost, apiPut, clearAccessToken, getAccessToken, setAccessToken } from "@/api/http";
+import { apiDelete, apiGet, apiGetText, apiPost, apiPut, clearAccessToken, getAccessToken, setAccessToken } from "@/api/http";
 
 export type AuthUser = { id: string; email: string };
-export type Profile = { id: string; user_id?: string; display_name: string; team: string; avatar_url: string | null; role?: string };
+export type Profile = {
+  id: string;
+  user_id?: string;
+  display_name: string;
+  team: string;
+  avatar_url: string | null;
+  role?: string;
+  must_change_password?: boolean;
+};
 export type AuthResponse = { access_token: string; token_type: string; user: AuthUser; profile: Profile };
+export type SignInResponse = {
+  access_token?: string;
+  token_type?: string;
+  must_change_password?: boolean;
+  password_change_token?: string;
+  user: AuthUser;
+  profile: Profile;
+};
+export type RefreshResponse = { access_token: string; token_type: string };
 
 export type ReviewCycle = {
   id: string;
@@ -12,6 +29,25 @@ export type ReviewCycle = {
   description: string;
   start_date: string;
   end_date: string;
+};
+
+export type FeedbackQuestion = {
+  id: string;
+  label: string;
+  description: string;
+  is_required: boolean;
+  sort_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type AdminCreateUserPayload = {
+  email: string;
+  display_name: string;
+  team: string;
+  role: string;
+  temp_password: string;
 };
 
 export type FeedbackItem = {
@@ -48,9 +84,11 @@ export async function signUp(email: string, password: string, displayName: strin
   return data;
 }
 
-export async function signIn(email: string, password: string): Promise<AuthResponse> {
-  const data = await apiPost<AuthResponse>("/auth/signin", { email, password });
-  setAccessToken(data.access_token);
+export async function signIn(email: string, password: string): Promise<SignInResponse> {
+  const data = await apiPost<SignInResponse>("/auth/signin", { email, password });
+  if (data.access_token) {
+    setAccessToken(data.access_token);
+  }
   return data;
 }
 
@@ -60,6 +98,18 @@ export async function signOut(): Promise<void> {
   } finally {
     clearAccessToken();
   }
+}
+
+export async function changePassword(token: string, newPassword: string): Promise<AuthResponse> {
+  const data = await apiPost<AuthResponse>("/auth/change-password", { token, new_password: newPassword });
+  setAccessToken(data.access_token);
+  return data;
+}
+
+export async function refreshAccessToken(): Promise<RefreshResponse> {
+  const data = await apiPost<RefreshResponse>("/auth/refresh", undefined, true);
+  setAccessToken(data.access_token);
+  return data;
 }
 
 export function hasAccessToken(): boolean {
@@ -77,6 +127,72 @@ export async function listProfiles(ids?: string[]): Promise<Profile[]> {
 
 export async function listReviewCycles(year: number): Promise<ReviewCycle[]> {
   return apiGet<ReviewCycle[]>("/review-cycles", { year });
+}
+
+export async function createReviewCycle(payload: Omit<ReviewCycle, "id" | "created_at" | "updated_at">): Promise<ReviewCycle> {
+  return apiPost<ReviewCycle>("/review-cycles", payload, true);
+}
+
+export async function updateReviewCycle(
+  id: string,
+  payload: { title: string; description: string; start_date: string; end_date: string },
+): Promise<ReviewCycle> {
+  return apiPut<ReviewCycle>(`/review-cycles/${id}`, payload, true);
+}
+
+export async function deleteReviewCycle(id: string): Promise<void> {
+  await apiDelete<{ message: string }>(`/review-cycles/${id}`, undefined, true);
+}
+
+export async function listFeedbackQuestions(): Promise<FeedbackQuestion[]> {
+  return apiGet<FeedbackQuestion[]>("/admin/feedback-questions", undefined, true);
+}
+
+export async function createFeedbackQuestion(payload: {
+  label: string;
+  description: string;
+  is_required: boolean;
+  sort_order: number;
+  is_active: boolean;
+}): Promise<FeedbackQuestion> {
+  return apiPost<FeedbackQuestion>("/admin/feedback-questions", payload, true);
+}
+
+export async function updateFeedbackQuestion(
+  id: string,
+  payload: { label: string; description: string; is_required: boolean; sort_order: number; is_active: boolean },
+): Promise<FeedbackQuestion> {
+  return apiPut<FeedbackQuestion>(`/admin/feedback-questions/${id}`, payload, true);
+}
+
+export async function deleteFeedbackQuestion(id: string): Promise<void> {
+  await apiDelete<{ message: string }>(`/admin/feedback-questions/${id}`, undefined, true);
+}
+
+export async function adminCreateUser(payload: AdminCreateUserPayload): Promise<{
+  id: string;
+  user_id: string;
+  email: string;
+  display_name: string;
+  team: string;
+  role: string;
+  must_change_password: boolean;
+}> {
+  return apiPost("/admin/users", payload, true);
+}
+
+export async function forcePasswordChange(email: string): Promise<void> {
+  await apiPost("/admin/users/force-password-change", { email }, true);
+}
+
+export async function exportFeedbackCsv(params: {
+  start_date?: string;
+  end_date?: string;
+  recipient_id?: string;
+  author_id?: string;
+  is_anonymous?: boolean;
+}): Promise<string> {
+  return apiGetText("/admin/feedback/export", params, true);
 }
 
 export async function getFeedbackCount(recipientId: string): Promise<number> {

@@ -10,7 +10,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Send, ChevronsUpDown, Check, Plus, X } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { createFeedback, listProfiles } from "@/services/backendApi";
+import { createFeedback, listFeedbackQuestions, listProfiles } from "@/services/backendApi";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 
@@ -28,6 +28,48 @@ const GiveFeedback = () => {
     queryKey: ["profiles"],
     queryFn: async () => listProfiles(),
   });
+
+  const { data: questions = [] } = useQuery({
+    queryKey: ["feedback-questions"],
+    queryFn: async () => listFeedbackQuestions(),
+  });
+
+  const activeQuestions = questions
+    .filter((q) => q.is_active)
+    .sort((a, b) => a.sort_order - b.sort_order);
+
+  const questionDefaults = [
+    {
+      label: "SITUATION",
+      description: "Briefly explain the situation/interaction you had with this person",
+    },
+    {
+      label: "BEHAVIOUR",
+      description: "What did they do in that situation that stood out (positively or negatively)?",
+    },
+    {
+      label: "IMPACT",
+      description: "How did it impact you, the team or the work outcome?",
+    },
+    {
+      label: "Additional Comments",
+      description: "(Optional) What is one thing you'd encourage them to continue or suggest doing differently",
+    },
+  ];
+
+  const questionLabels = questionDefaults.map((fallback, index) => {
+    const label = activeQuestions[index]?.label?.trim() || fallback.label;
+    const description = activeQuestions[index]?.description?.trim() || fallback.description;
+    if (label.includes(":")) return label;
+    return `${label}: ${description}`;
+  });
+
+  const requiredMap: Record<"situation" | "behaviour" | "impact" | "optional", boolean> = {
+    situation: activeQuestions[0]?.is_required ?? true,
+    behaviour: activeQuestions[1]?.is_required ?? true,
+    impact: activeQuestions[2]?.is_required ?? true,
+    optional: activeQuestions[3]?.is_required ?? false,
+  };
 
   const filteredColleagues = colleagues.filter((c) => c.id !== profile?.id);
 
@@ -73,12 +115,13 @@ const GiveFeedback = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const hasAtLeastOneValid = situations.some(
-    (s) =>
-      s.situation.trim().length > 0 &&
-      s.behaviour.trim().length > 0 &&
-      s.impact.trim().length > 0
-  );
+    const hasAtLeastOneValid = situations.some((s) => {
+      const requiredFields = ["situation", "behaviour", "impact", "optional"] as const;
+      return requiredFields.every((field) => {
+        if (!requiredMap[field]) return true;
+        return s[field].trim().length > 0;
+      });
+    });
     if (!selectedColleague) {
     toast.error("Please select a colleague");
     return;
@@ -196,7 +239,7 @@ const GiveFeedback = () => {
                       )}
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-xs font-normal text-foreground/80">SITUATION: Briefly explain the situation/interaction you had with this person</Label>
+                      <Label className="text-xs font-normal text-foreground/80">{questionLabels[0]}</Label>
                       <Textarea
                         value={item.situation}
                         onChange={(e) =>
@@ -205,7 +248,7 @@ const GiveFeedback = () => {
                       />
                     </div>
                     <div className="space-y-2">
-                        <Label className="text-xs font-normal text-foreground/80">BEHAVIOUR: What did they do in that situation that stood out (positively or negatively)?</Label>
+                        <Label className="text-xs font-normal text-foreground/80">{questionLabels[1]}</Label>
                         <Textarea
                           value={item.behaviour}
                           onChange={(e) =>
@@ -214,7 +257,7 @@ const GiveFeedback = () => {
                         />
                     </div>
                     <div className="space-y-2">
-                        <Label className="text-xs font-normal text-foreground/80">IMPACT: How did it impact you, the team or the work outcome?</Label>
+                        <Label className="text-xs font-normal text-foreground/80">{questionLabels[2]}</Label>
                         <Textarea
                           value={item.impact}
                           onChange={(e) =>
@@ -223,7 +266,7 @@ const GiveFeedback = () => {
                         />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-xs font-normal text-foreground/80">(Optional) What is one thing you'd encourage them to continue or suggest doing differently</Label>
+                      <Label className="text-xs font-normal text-foreground/80">{questionLabels[3]}</Label>
                       <Textarea
                         value={item.optional}
                         onChange={(e) =>

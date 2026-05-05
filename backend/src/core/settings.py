@@ -12,6 +12,8 @@ class Settings(BaseSettings):
     jwt_refresh_secret: str
     jwt_access_expires_minutes: int = 15
     jwt_refresh_expires_days: int = 7
+    jwt_refresh_expires_hours: int = 3
+    jwt_password_change_expires_minutes: int = 15
 
     database_url: str
 

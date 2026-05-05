@@ -22,23 +22,66 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 def create_access_token(user_id: str) -> str:
     expires_delta = timedelta(minutes=settings.jwt_access_expires_minutes)
-    expire = datetime.now(timezone.utc) + expires_delta
-    payload = {"sub": user_id, "type": "access", "exp": expire}
+    now = datetime.now(timezone.utc)
+    expire = now + expires_delta
+    payload = {"sub": user_id, "type": "access", "exp": expire, "iat": int(now.timestamp())}
     return jwt.encode(payload, settings.jwt_access_secret, algorithm="HS256")
 
 
-def decode_access_token(token: str) -> str:
-    try:
-        payload = jwt.decode(token, settings.jwt_access_secret, algorithms=["HS256"])
-    except JWTError as exc:
-        raise AuthError("Invalid access token") from exc
+def create_refresh_token(user_id: str) -> str:
+    expires_delta = timedelta(hours=settings.jwt_refresh_expires_hours)
+    now = datetime.now(timezone.utc)
+    expire = now + expires_delta
+    payload = {"sub": user_id, "type": "refresh", "exp": expire, "iat": int(now.timestamp())}
+    return jwt.encode(payload, settings.jwt_refresh_secret, algorithm="HS256")
 
-    token_type = payload.get("type")
-    if token_type != "access":
+
+def create_password_change_token(user_id: str) -> str:
+    expires_delta = timedelta(minutes=settings.jwt_password_change_expires_minutes)
+    now = datetime.now(timezone.utc)
+    expire = now + expires_delta
+    payload = {"sub": user_id, "type": "password_change", "exp": expire, "iat": int(now.timestamp())}
+    return jwt.encode(payload, settings.jwt_refresh_secret, algorithm="HS256")
+
+
+def _decode_token(token: str, secret: str, token_type: str, error_label: str) -> dict:
+    try:
+        payload = jwt.decode(token, secret, algorithms=["HS256"])
+    except JWTError as exc:
+        raise AuthError(f"Invalid {error_label} token") from exc
+
+    if payload.get("type") != token_type:
         raise AuthError("Invalid token type")
 
     user_id = payload.get("sub")
     if not user_id:
         raise AuthError("Missing token subject")
 
-    return str(user_id)
+    return payload
+
+
+def decode_access_token_payload(token: str) -> dict:
+    return _decode_token(token, settings.jwt_access_secret, "access", "access")
+
+
+def decode_refresh_token_payload(token: str) -> dict:
+    return _decode_token(token, settings.jwt_refresh_secret, "refresh", "refresh")
+
+
+def decode_password_change_token_payload(token: str) -> dict:
+    return _decode_token(token, settings.jwt_refresh_secret, "password_change", "password change")
+
+
+def decode_access_token(token: str) -> str:
+    payload = decode_access_token_payload(token)
+    return str(payload["sub"])
+
+
+def decode_refresh_token(token: str) -> str:
+    payload = decode_refresh_token_payload(token)
+    return str(payload["sub"])
+
+
+def decode_password_change_token(token: str) -> str:
+    payload = decode_password_change_token_payload(token)
+    return str(payload["sub"])

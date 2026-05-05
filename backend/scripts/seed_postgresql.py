@@ -38,7 +38,7 @@ class SeedUser:
     password: str
     display_name: str
     team: str
-
+    role: str = "member"
 
 SEED_USERS: list[SeedUser] = [
     SeedUser(email="tania@htx.gov.sg", password="password123", display_name="Tania Foo", team="Alpha"),
@@ -46,7 +46,7 @@ SEED_USERS: list[SeedUser] = [
     SeedUser(email="john@htx.gov.sg", password="password123", display_name="John Zhang", team="Beta"),
     SeedUser(email="jules@htx.gov.sg", password="password123", display_name="Jules Ang", team="Beta"),
     SeedUser(email="yinyun@htx.gov.sg", password="password123", display_name="Tan Yin Yu", team="Alpha"),
-    SeedUser(email="vince@htx.gov.sg", password="password123", display_name="Vince Ong", team="Alpha"),
+    SeedUser(email="vince@htx.gov.sg", password="password123", display_name="Vince Ong", team="Alpha", role ="admin"),
     SeedUser(email="aaron.tan@htx.gov.sg", password="password123", display_name="Aaron Tan", team="Bravo"),
     SeedUser(email="benjamin.lim@htx.gov.sg", password="password123", display_name="Benjamin Lim", team="Alpha"),
     SeedUser(email="charles.ng@htx.gov.sg", password="password123", display_name="Charles Ng", team="Bravo"),
@@ -105,6 +105,7 @@ def _create_tables(conn: psycopg.Connection) -> None:
       role TEXT NOT NULL DEFAULT 'member',
       must_change_password BOOLEAN NOT NULL DEFAULT TRUE,
       password_changed_at TIMESTAMPTZ,
+            tokens_revoked_at TIMESTAMPTZ,
       created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
       CONSTRAINT profiles_role_check CHECK (role IN ('admin', 'member'))
@@ -152,6 +153,18 @@ def _create_tables(conn: psycopg.Connection) -> None:
       UNIQUE (year, quarter)
     );
 
+        CREATE TABLE IF NOT EXISTS public.feedback_questions (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            label TEXT NOT NULL,
+            description TEXT NOT NULL DEFAULT '',
+            is_required BOOLEAN NOT NULL DEFAULT TRUE,
+            sort_order INTEGER NOT NULL DEFAULT 0,
+            is_active BOOLEAN NOT NULL DEFAULT TRUE,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+            UNIQUE (label)
+        );
+
     CREATE INDEX IF NOT EXISTS idx_feedback_recipient_id ON public.feedback (recipient_id);
     CREATE INDEX IF NOT EXISTS idx_feedback_author_id ON public.feedback (author_id);
     CREATE INDEX IF NOT EXISTS idx_feedback_created_at ON public.feedback (created_at DESC);
@@ -161,6 +174,8 @@ def _create_tables(conn: psycopg.Connection) -> None:
 
     ALTER TABLE IF EXISTS public.profiles ADD COLUMN IF NOT EXISTS email TEXT;
     ALTER TABLE IF EXISTS public.profiles ADD COLUMN IF NOT EXISTS password_hash TEXT;
+    ALTER TABLE IF EXISTS public.profiles ADD COLUMN IF NOT EXISTS tokens_revoked_at TIMESTAMPTZ;
+    ALTER TABLE IF EXISTS public.feedback_questions ADD COLUMN IF NOT EXISTS description TEXT;
     CREATE UNIQUE INDEX IF NOT EXISTS idx_profiles_email_unique ON public.profiles (email);
 
     CREATE OR REPLACE FUNCTION public.set_updated_at_column()
@@ -182,6 +197,11 @@ def _create_tables(conn: psycopg.Connection) -> None:
     CREATE TRIGGER update_review_cycles_updated_at
       BEFORE UPDATE ON public.review_cycles
       FOR EACH ROW EXECUTE FUNCTION public.set_updated_at_column();
+
+        DROP TRIGGER IF EXISTS update_feedback_questions_updated_at ON public.feedback_questions;
+        CREATE TRIGGER update_feedback_questions_updated_at
+            BEFORE UPDATE ON public.feedback_questions
+            FOR EACH ROW EXECUTE FUNCTION public.set_updated_at_column();
     """
     with conn.cursor() as cur:
         cur.execute(ddl)
@@ -191,14 +211,14 @@ def _upsert_profiles(conn: psycopg.Connection) -> dict[str, uuid.UUID]:
     profile_ids: dict[str, uuid.UUID] = {}
     upsert_sql = """
     INSERT INTO public.profiles (id, user_id, email, password_hash, display_name, team, role, must_change_password)
-    VALUES (%s, %s, %s, %s, %s, %s, 'member', TRUE)
+    VALUES (%s, %s, %s, %s, %s, %s, %s, TRUE)
         ON CONFLICT (user_id)
     DO UPDATE SET
             email = EXCLUDED.email,
       password_hash = EXCLUDED.password_hash,
       display_name = EXCLUDED.display_name,
       team = EXCLUDED.team,
-      role = COALESCE(public.profiles.role, 'member')
+      role = COALESCE(public.profiles.role, EXCLUDED.role)
     RETURNING id;
     """
     with conn.cursor() as cur:
@@ -206,7 +226,7 @@ def _upsert_profiles(conn: psycopg.Connection) -> dict[str, uuid.UUID]:
             user_uuid = _make_user_uuid(user.email)
             cur.execute(
                 upsert_sql,
-                (user_uuid, user_uuid, user.email.lower(), hash_password(user.password), user.display_name, user.team),
+                (user_uuid, user_uuid, user.email.lower(), hash_password(user.password), user.display_name, user.team, user.role),
             )
             profile_id = cur.fetchone()[0]
             profile_ids[user.email] = profile_id
@@ -298,6 +318,28 @@ def _insert_upvotes(conn: psycopg.Connection, profile_ids: dict[str, uuid.UUID])
     print(f"  ok Inserted {len(rows)} upvote rows")
 
 
+def _seed_feedback_questions(conn: psycopg.Connection) -> None:
+    rows = [
+        ("Situation", "Briefly explain the situation/interaction you had with this person", True, 1, True),
+        ("Behaviour", "What did they do in that situation that stood out (positively or negatively)?", True, 2, True),
+        ("Impact", "How did it impact you, the team or the work outcome?", True, 3, True),
+        ("Additional Comments", "(Optional) What is one thing you'd encourage them to continue or suggest doing differently", False, 4, True),
+    ]
+
+    sql = """
+        INSERT INTO public.feedback_questions (label, description, is_required, sort_order, is_active)
+        VALUES (%s, %s, %s, %s, %s)
+        ON CONFLICT (label) DO UPDATE SET
+            description = EXCLUDED.description,
+            is_required = EXCLUDED.is_required,
+            sort_order = EXCLUDED.sort_order,
+            is_active = EXCLUDED.is_active;
+        """
+    with conn.cursor() as cur:
+        cur.executemany(sql, rows)
+    print("  ok Seeded feedback questions")
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Seed PostgreSQL with demo users, profiles, feedback, and upvotes.")
     parser.add_argument("--print-creds", action="store_true", help="Print demo login credentials at the end.")
@@ -324,6 +366,9 @@ def main(argv: list[str] | None = None) -> int:
 
         print("\nSeeding review cycles...")
         _seed_review_cycles(conn, dt.date.today().year)
+
+        print("\nSeeding feedback questions...")
+        _seed_feedback_questions(conn)
 
         print("\nClearing previous seeded feedback/upvotes...")
         _clear_seed_targets(conn)

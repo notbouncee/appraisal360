@@ -48,11 +48,6 @@ clean:
 		docker compose -f $$service/docker-compose.yml down -v --remove-orphans; \
 	done
 
-seed:
-	$(MAKE) -C ../backend seed
-
-seed-creds:
-	$(MAKE) -C ../backend seed-creds
 
 help:
 	@echo "Available targets:"
@@ -64,6 +59,4 @@ help:
 	@echo "  restart-<svc> - Restart a specific service"
 	@echo "  status        - Show status of all services"
 	@echo "  clean         - Stop and remove all containers/volumes"
-	@echo "  seed          - Seed PostgreSQL via the backend package"
-	@echo "  seed-creds    - Print seed credentials via the backend package"
 	@echo "  help          - Show this help message"

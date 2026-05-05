@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from src.api.router import api_router
 from src.core.settings import settings
-from src.repository.repo_utils.bootstrap import ensure_schema
+from src.repository.repo_utils.bootstrap import ensure_feedback_questions, ensure_schema
 
 app = FastAPI(title=settings.app_name)
 
@@ -21,6 +21,7 @@ app.include_router(api_router)
 @app.on_event("startup")
 def on_startup() -> None:
     ensure_schema()
+    ensure_feedback_questions()
 
 
 @app.get("/", tags=["meta"])
