@@ -28,7 +28,7 @@ class AdminService:
         self._validate_password(payload["raw_password"])
 
         role = (payload["role"] or "member").lower()
-        if role not in {"admin", "member"}:
+        if role not in {"admin", "member", "manager"}:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid role")
 
         return self.user_repo.create_user_admin(

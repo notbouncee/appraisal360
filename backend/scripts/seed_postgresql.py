@@ -41,7 +41,7 @@ class SeedUser:
     role: str = "member"
 
 SEED_USERS: list[SeedUser] = [
-    SeedUser(email="tania@htx.gov.sg", password="password123", display_name="Tania Foo", team="Alpha"),
+    SeedUser(email="tania@htx.gov.sg", password="password123", display_name="Tania Foo", team="Alpha", role ="manager"),
     SeedUser(email="adrian@htx.gov.sg", password="password123", display_name="Adrian Tok", team="Alpha"),
     SeedUser(email="john@htx.gov.sg", password="password123", display_name="John Zhang", team="Beta"),
     SeedUser(email="jules@htx.gov.sg", password="password123", display_name="Jules Ang", team="Beta"),
@@ -108,7 +108,7 @@ def _create_tables(conn: psycopg.Connection) -> None:
             tokens_revoked_at TIMESTAMPTZ,
       created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-      CONSTRAINT profiles_role_check CHECK (role IN ('admin', 'member'))
+      CONSTRAINT profiles_role_check CHECK (role IN ('manager','admin', 'member'))
     );
 
     CREATE TABLE IF NOT EXISTS public.feedback (

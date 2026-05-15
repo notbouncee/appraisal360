@@ -1,4 +1,4 @@
-import { LayoutDashboard, MessageSquarePlus, LogOut, Shield, Trophy } from "lucide-react";
+import { LayoutDashboard, MessageSquarePlus, LogOut, Shield, Trophy, BarChart3 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { NavLink } from "@/components/molecules/NavLink";
 import {
@@ -26,6 +26,7 @@ export function AppSidebar() {
   const { profile, signOut } = useAuth();
   const navigate = useNavigate();
   const isAdmin = (profile?.role || "").toLowerCase() === "admin";
+  const isManager = (profile?.role || "").toLowerCase() === "manager";
 
   const initials = profile?.display_name
     ?.split(" ")
@@ -84,6 +85,20 @@ export function AppSidebar() {
                     >
                       <Shield className="h-4 w-4" />
                       <span className="flex-1">Admin</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
+              {isManager && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <NavLink
+                      to="/manager-dashboard"
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                      activeClassName="bg-accent text-primary font-medium"
+                    >
+                      <BarChart3 className="h-4 w-4" />
+                      <span className="flex-1">Manager Dashboard</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

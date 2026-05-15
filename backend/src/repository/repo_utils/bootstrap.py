@@ -19,7 +19,7 @@ def ensure_schema() -> None:
       tokens_revoked_at TIMESTAMPTZ,
       created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-      CONSTRAINT profiles_role_check CHECK (role IN ('admin', 'member'))
+      CONSTRAINT profiles_role_check CHECK (role IN ('admin', 'member', 'manager'))
     );
 
     CREATE TABLE IF NOT EXISTS public.feedback (
@@ -85,6 +85,9 @@ def ensure_schema() -> None:
     ALTER TABLE IF EXISTS public.profiles ADD COLUMN IF NOT EXISTS email TEXT;
     ALTER TABLE IF EXISTS public.profiles ADD COLUMN IF NOT EXISTS password_hash TEXT;
     ALTER TABLE IF EXISTS public.profiles ADD COLUMN IF NOT EXISTS tokens_revoked_at TIMESTAMPTZ;
+    ALTER TABLE IF EXISTS public.profiles DROP CONSTRAINT IF EXISTS profiles_role_check;
+    ALTER TABLE IF EXISTS public.profiles
+      ADD CONSTRAINT profiles_role_check CHECK (role IN ('admin', 'member', 'manager'));
     ALTER TABLE IF EXISTS public.feedback ADD COLUMN IF NOT EXISTS responses JSONB NOT NULL DEFAULT '[]'::jsonb;
     ALTER TABLE IF EXISTS public.feedback_questions ADD COLUMN IF NOT EXISTS description TEXT;
     CREATE UNIQUE INDEX IF NOT EXISTS idx_profiles_email_unique ON public.profiles (email);

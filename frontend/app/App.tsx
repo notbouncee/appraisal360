@@ -14,6 +14,7 @@ import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 import ViewUpvotes from "./pages/ViewUpvotes";
 import TeamAppreciation from "./pages/TeamAppreciation";
+import ManagerDashboard from "./pages/ManagerDashboard";
 
 const queryClient = new QueryClient();
 
@@ -27,12 +28,27 @@ const App = () => (
           <Routes>
             <Route path="/auth" element={<Auth />} />
             <Route path="/change-password" element={<ChangePassword />} />
-            <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <Admin />
+                </ProtectedRoute>
+              }
+            />
             <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/give-feedback" element={<ProtectedRoute><GiveFeedback /></ProtectedRoute>} />
             <Route path="/view-feedback" element={<ProtectedRoute><ViewFeedback /></ProtectedRoute>} />
             <Route path="/view-upvotes" element={<ProtectedRoute><ViewUpvotes /></ProtectedRoute>} />
             <Route path="/team-appreciation" element={<ProtectedRoute><TeamAppreciation /></ProtectedRoute>} />
+            <Route
+              path="/manager-dashboard"
+              element={
+                <ProtectedRoute allowedRoles={["manager"]}>
+                  <ManagerDashboard />
+                </ProtectedRoute>
+              }
+            />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
