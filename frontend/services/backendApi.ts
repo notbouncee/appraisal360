@@ -56,10 +56,18 @@ export type FeedbackItem = {
   behaviour: string;
   impact: string;
   optional: string | null;
+  responses?: FeedbackAnswer[];
   created_at: string;
   author_id: string;
   recipient_id: string;
   is_anonymous: boolean;
+};
+
+export type FeedbackAnswer = {
+  question_id?: string | null;
+  label: string;
+  answer: string;
+  sort_order?: number | null;
 };
 
 export type UpvoteItem = {
@@ -211,10 +219,11 @@ export async function getFeedbackReceived(recipientId: string, page: number, pag
 export async function createFeedback(items: Array<{
   author_id: string;
   recipient_id: string;
-  situation: string;
-  behaviour: string;
-  impact: string;
+  situation?: string;
+  behaviour?: string;
+  impact?: string;
   optional?: string;
+  responses?: FeedbackAnswer[];
   is_anonymous: boolean;
 }>): Promise<void> {
   await apiPost<{ message: string }>("/feedback/bulk", { items }, true);

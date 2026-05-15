@@ -30,6 +30,7 @@ def ensure_schema() -> None:
       behaviour TEXT NOT NULL,
       impact TEXT NOT NULL,
       optional TEXT,
+      responses JSONB NOT NULL DEFAULT '[]'::jsonb,
       is_anonymous BOOLEAN NOT NULL DEFAULT FALSE,
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
@@ -84,6 +85,7 @@ def ensure_schema() -> None:
     ALTER TABLE IF EXISTS public.profiles ADD COLUMN IF NOT EXISTS email TEXT;
     ALTER TABLE IF EXISTS public.profiles ADD COLUMN IF NOT EXISTS password_hash TEXT;
     ALTER TABLE IF EXISTS public.profiles ADD COLUMN IF NOT EXISTS tokens_revoked_at TIMESTAMPTZ;
+    ALTER TABLE IF EXISTS public.feedback ADD COLUMN IF NOT EXISTS responses JSONB NOT NULL DEFAULT '[]'::jsonb;
     ALTER TABLE IF EXISTS public.feedback_questions ADD COLUMN IF NOT EXISTS description TEXT;
     CREATE UNIQUE INDEX IF NOT EXISTS idx_profiles_email_unique ON public.profiles (email);
 

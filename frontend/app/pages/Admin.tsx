@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import AppLayout from "@/app/templates/AppLayout";
@@ -23,6 +23,7 @@ import {
   type ReviewCycle,
 } from "@/services/backendApi";
 import { toast } from "sonner";
+import { GripVertical } from "lucide-react";
 
 const Admin = () => {
   const { profile, loading } = useAuth();
@@ -30,6 +31,12 @@ const Admin = () => {
   const isAdmin = (profile?.role || "").toLowerCase() === "admin";
 
   const [questionsDrafts, setQuestionsDrafts] = useState<Record<string, FeedbackQuestion>>({});
+  const [questionOrder, setQuestionOrder] = useState<string[]>([]);
+  const [draggingQuestionId, setDraggingQuestionId] = useState<string | null>(null);
+  const [savingOrder, setSavingOrder] = useState(false);
+  const lastSavedOrderRef = useRef<string[]>([]);
+  const pendingOrderRef = useRef<string[] | null>(null);
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [newQuestion, setNewQuestion] = useState({
     label: "",
     description: "",
@@ -102,6 +109,28 @@ const Admin = () => {
     [questions],
   );
 
+  useEffect(() => {
+    if (!sortedQuestions.length) {
+      setQuestionOrder([]);
+      lastSavedOrderRef.current = [];
+      return;
+    }
+    const nextOrder = sortedQuestions.map((q) => q.id);
+    setQuestionOrder(nextOrder);
+    lastSavedOrderRef.current = nextOrder;
+  }, [sortedQuestions]);
+
+  const questionsById = useMemo(() => {
+    const map = new Map<string, FeedbackQuestion>();
+    questions.forEach((q) => map.set(q.id, q));
+    return map;
+  }, [questions]);
+
+  const orderedQuestions = useMemo(() => {
+    if (!questionOrder.length) return sortedQuestions;
+    return questionOrder.map((id) => questionsById.get(id)).filter(Boolean) as FeedbackQuestion[];
+  }, [questionOrder, questionsById, sortedQuestions]);
+
   if (loading) return null;
   if (!profile) return <Navigate to="/auth" replace />;
   if (!isAdmin) return <Navigate to="/" replace />;
@@ -112,11 +141,12 @@ const Admin = () => {
         toast.error("Label is required");
         return;
       }
+      const nextSortOrder = sortedQuestions.length + 1;
       await createFeedbackQuestion({
         label: newQuestion.label.trim(),
         description: newQuestion.description.trim(),
         is_required: newQuestion.is_required,
-        sort_order: Number(newQuestion.sort_order),
+        sort_order: nextSortOrder,
         is_active: newQuestion.is_active,
       });
       setNewQuestion({ label: "", description: "", is_required: true, sort_order: 1, is_active: true });
@@ -154,6 +184,82 @@ const Admin = () => {
       toast.error(err.message);
     }
   };
+
+  const handleQuestionReorder = (draggedId: string, targetId: string) => {
+    if (draggedId === targetId) return;
+    const currentOrder = questionOrder.length ? questionOrder : sortedQuestions.map((q) => q.id);
+    const nextOrder = [...currentOrder];
+    const fromIndex = nextOrder.indexOf(draggedId);
+    const toIndex = nextOrder.indexOf(targetId);
+    if (fromIndex === -1 || toIndex === -1) return;
+    nextOrder.splice(fromIndex, 1);
+    nextOrder.splice(toIndex, 0, draggedId);
+    setQuestionOrder(nextOrder);
+    setQuestionsDrafts((prev) => {
+      const updated = { ...prev };
+      nextOrder.forEach((id, index) => {
+        if (updated[id]) {
+          updated[id] = { ...updated[id], sort_order: index + 1 };
+        }
+      });
+      return updated;
+    });
+  };
+
+  const isSameOrder = useCallback(
+    (a: string[], b: string[]) => a.length === b.length && a.every((id, index) => id === b[index]),
+    [],
+  );
+
+  const handleOrderSave = useCallback(async (nextOrder: string[]) => {
+    if (!nextOrder.length) return;
+    if (savingOrder) {
+      pendingOrderRef.current = nextOrder;
+      return;
+    }
+    setSavingOrder(true);
+    try {
+      await Promise.all(
+        nextOrder.map((id, index) => {
+          const draft = questionsDrafts[id] ?? questionsById.get(id);
+          if (!draft) return Promise.resolve();
+          return updateFeedbackQuestion(id, {
+            label: draft.label,
+            description: draft.description,
+            is_required: draft.is_required,
+            sort_order: index + 1,
+            is_active: draft.is_active,
+          });
+        }),
+      );
+      lastSavedOrderRef.current = nextOrder;
+      await queryClient.invalidateQueries({ queryKey: ["admin", "feedback-questions"] });
+      toast.success("Order saved", { position: "top-center" });
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setSavingOrder(false);
+      if (pendingOrderRef.current && !isSameOrder(pendingOrderRef.current, lastSavedOrderRef.current)) {
+        const pending = pendingOrderRef.current;
+        pendingOrderRef.current = null;
+        void handleOrderSave(pending);
+      } else {
+        pendingOrderRef.current = null;
+      }
+    }
+  }, [isSameOrder, questionsById, questionsDrafts, queryClient, savingOrder]);
+
+  useEffect(() => {
+    if (!questionOrder.length) return;
+    if (isSameOrder(questionOrder, lastSavedOrderRef.current)) return;
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    autoSaveTimerRef.current = setTimeout(() => {
+      void handleOrderSave(questionOrder);
+    }, 400);
+    return () => {
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    };
+  }, [handleOrderSave, isSameOrder, questionOrder]);
 
   const handleCycleCreate = async () => {
     try {
@@ -265,7 +371,12 @@ const Admin = () => {
 
         <Card>
           <CardContent className="p-6 space-y-6">
-            <h2 className="text-lg font-semibold">Configurable Feedback Questions</h2>
+            <div className="flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
+              <div className="space-y-1">
+                <h2 className="text-lg font-semibold">Configurable Feedback Questions</h2>
+                <p className="text-sm text-muted-foreground">Drag and drop to reorder. Changes save automatically.</p>
+              </div>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
               <div className="md:col-span-2">
                 <Label>Label</Label>
@@ -274,10 +385,6 @@ const Admin = () => {
               <div className="md:col-span-2">
                 <Label>Description</Label>
                 <Input value={newQuestion.description} onChange={(e) => setNewQuestion({ ...newQuestion, description: e.target.value })} />
-              </div>
-              <div>
-                <Label>Order</Label>
-                <Input type="number" value={newQuestion.sort_order} onChange={(e) => setNewQuestion({ ...newQuestion, sort_order: Number(e.target.value) })} />
               </div>
               <div>
                 <Label>Required</Label>
@@ -307,8 +414,23 @@ const Admin = () => {
             </div>
 
             <div className="space-y-3">
-              {sortedQuestions.map((q) => (
-                <div key={q.id} className="grid grid-cols-1 md:grid-cols-7 gap-3 items-end">
+              {orderedQuestions.map((q) => (
+                <div
+                  key={q.id}
+                  className="grid grid-cols-1 md:grid-cols-8 gap-3 items-end rounded-lg border p-3"
+                  draggable
+                  onDragStart={() => setDraggingQuestionId(q.id)}
+                  onDragEnd={() => setDraggingQuestionId(null)}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={() => {
+                    if (!draggingQuestionId) return;
+                    handleQuestionReorder(draggingQuestionId, q.id);
+                  }}
+                >
+                  <div className="flex items-center gap-2">
+                    <GripVertical className="h-5 w-5 text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">Drag to reorder</span>
+                  </div>
                   <div className="md:col-span-2">
                     <Label>Label</Label>
                     <Input
@@ -329,19 +451,6 @@ const Admin = () => {
                         setQuestionsDrafts({
                           ...questionsDrafts,
                           [q.id]: { ...questionsDrafts[q.id], description: e.target.value },
-                        })
-                      }
-                    />
-                  </div>
-                  <div>
-                    <Label>Order</Label>
-                    <Input
-                      type="number"
-                      value={questionsDrafts[q.id]?.sort_order ?? 0}
-                      onChange={(e) =>
-                        setQuestionsDrafts({
-                          ...questionsDrafts,
-                          [q.id]: { ...questionsDrafts[q.id], sort_order: Number(e.target.value) },
                         })
                       }
                     />

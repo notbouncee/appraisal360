@@ -1,4 +1,5 @@
 import csv
+import json
 from io import StringIO
 
 from fastapi import HTTPException, status
@@ -74,6 +75,7 @@ class AdminService:
                 "optional",
                 "is_anonymous",
                 "created_at",
+                "responses",
             ]
         )
         for item in items:
@@ -88,6 +90,7 @@ class AdminService:
                     item.get("optional"),
                     item.get("is_anonymous"),
                     item.get("created_at"),
+                    json.dumps(item.get("responses") or []),
                 ]
             )
 

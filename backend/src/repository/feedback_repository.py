@@ -19,7 +19,7 @@ class FeedbackRepository:
                 total = int(cur.fetchone()["count"])
                 cur.execute(
                     """
-                    SELECT id, situation, behaviour, impact, optional, created_at, author_id, recipient_id, is_anonymous
+                    SELECT id, situation, behaviour, impact, optional, responses, created_at, author_id, recipient_id, is_anonymous
                     FROM public.feedback
                     WHERE recipient_id = %(recipient_id)s
                     ORDER BY created_at DESC
@@ -32,8 +32,8 @@ class FeedbackRepository:
 
     def insert_many(self, rows: list[dict]) -> None:
         sql = """
-        INSERT INTO public.feedback (author_id, recipient_id, situation, behaviour, impact, optional, is_anonymous)
-        VALUES (%(author_id)s, %(recipient_id)s, %(situation)s, %(behaviour)s, %(impact)s, %(optional)s, %(is_anonymous)s)
+        INSERT INTO public.feedback (author_id, recipient_id, situation, behaviour, impact, optional, responses, is_anonymous)
+        VALUES (%(author_id)s, %(recipient_id)s, %(situation)s, %(behaviour)s, %(impact)s, %(optional)s, %(responses)s, %(is_anonymous)s)
         """
         with get_connection() as conn:
             with conn.cursor() as cur:
@@ -71,7 +71,7 @@ class FeedbackRepository:
             where_clause = "WHERE " + " AND ".join(conditions)
 
         sql = f"""
-        SELECT id, author_id, recipient_id, situation, behaviour, impact, optional, is_anonymous, created_at
+        SELECT id, author_id, recipient_id, situation, behaviour, impact, optional, responses, is_anonymous, created_at
         FROM public.feedback
         {where_clause}
         ORDER BY created_at DESC

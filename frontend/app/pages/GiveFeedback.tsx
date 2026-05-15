@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/molecules/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/molecules/command";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Send, ChevronsUpDown, Check, Plus, X } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -19,9 +19,9 @@ const GiveFeedback = () => {
   const queryClient = useQueryClient();
   const [selectedColleague, setSelectedColleague] = useState("");
   const [comboboxOpen, setComboboxOpen] = useState(false);
-  const [situations, setSituations] = useState([
-  { situation: "", behaviour: "", impact: "", optional: "" }
-]);
+  const [situations, setSituations] = useState<Array<{ answers: string[] }>>([
+    { answers: [] },
+  ]);
   const [isAnonymous, setIsAnonymous] = useState(true);
 
   const { data: colleagues = [] } = useQuery({
@@ -38,60 +38,97 @@ const GiveFeedback = () => {
     .filter((q) => q.is_active)
     .sort((a, b) => a.sort_order - b.sort_order);
 
-  const questionDefaults = [
-    {
-      label: "SITUATION",
-      description: "Briefly explain the situation/interaction you had with this person",
-    },
-    {
-      label: "BEHAVIOUR",
-      description: "What did they do in that situation that stood out (positively or negatively)?",
-    },
-    {
-      label: "IMPACT",
-      description: "How did it impact you, the team or the work outcome?",
-    },
-    {
-      label: "Additional Comments",
-      description: "(Optional) What is one thing you'd encourage them to continue or suggest doing differently",
-    },
-  ];
+  const questionDefaults = useMemo(
+    () => [
+      {
+        label: "SITUATION",
+        description: "Briefly explain the situation/interaction you had with this person",
+        is_required: true,
+      },
+      {
+        label: "BEHAVIOUR",
+        description: "What did they do in that situation that stood out (positively or negatively)?",
+        is_required: true,
+      },
+      {
+        label: "IMPACT",
+        description: "How did it impact you, the team or the work outcome?",
+        is_required: true,
+      },
+      {
+        label: "Additional Comments",
+        description: "(Optional) What is one thing you'd encourage them to continue or suggest doing differently",
+        is_required: false,
+      },
+    ],
+    [],
+  );
 
-  const questionLabels = questionDefaults.map((fallback, index) => {
-    const label = activeQuestions[index]?.label?.trim() || fallback.label;
-    const description = activeQuestions[index]?.description?.trim() || fallback.description;
-    if (label.includes(":")) return label;
-    return `${label}: ${description}`;
-  });
+  const effectiveQuestions = useMemo(() => {
+    if (activeQuestions.length) return activeQuestions;
+    return questionDefaults.map((fallback, index) => ({
+      id: `default-${index}`,
+      label: fallback.label,
+      description: fallback.description,
+      is_required: fallback.is_required,
+      sort_order: index + 1,
+    }));
+  }, [activeQuestions, questionDefaults]);
 
-  const requiredMap: Record<"situation" | "behaviour" | "impact" | "optional", boolean> = {
-    situation: activeQuestions[0]?.is_required ?? true,
-    behaviour: activeQuestions[1]?.is_required ?? true,
-    impact: activeQuestions[2]?.is_required ?? true,
-    optional: activeQuestions[3]?.is_required ?? false,
-  };
+  const questionLabels = useMemo(
+    () =>
+      effectiveQuestions.map((question) => {
+        const label = question.label?.trim() || "";
+        const description = question.description?.trim() || "";
+        if (!description) return label;
+        if (label.includes(":")) return label;
+        return `${label}: ${description}`;
+      }),
+    [effectiveQuestions],
+  );
+
+  const questionCount = effectiveQuestions.length;
+
+  useEffect(() => {
+    if (!questionCount) return;
+    setSituations((prev) =>
+      prev.map((item) => {
+        const nextAnswers = [...item.answers];
+        if (nextAnswers.length < questionCount) {
+          nextAnswers.push(...Array(questionCount - nextAnswers.length).fill(""));
+        }
+        return { answers: nextAnswers.slice(0, questionCount) };
+      }),
+    );
+  }, [questionCount]);
 
   const filteredColleagues = colleagues.filter((c) => c.id !== profile?.id);
 
   const submitMutation = useMutation({
     mutationFn: async () => {
       const rows = situations
-        .filter(
-          (s) =>
-            s.situation.trim() ||
-            s.behaviour.trim() ||
-            s.impact.trim() ||
-            s.optional.trim()
-        )
-        .map((s) => ({
-          author_id: profile!.id,
-          recipient_id: selectedColleague,
-          situation: s.situation.trim(),
-          behaviour: s.behaviour.trim(),
-          impact: s.impact.trim(),
-          optional: s.optional.trim(),
-          is_anonymous: isAnonymous,
-        }));
+        .filter((s) => s.answers.some((answer) => answer.trim().length > 0))
+        .map((s) => {
+          const responses = effectiveQuestions
+            .map((question, index) => ({
+              question_id: question.id,
+              label: question.label,
+              answer: s.answers[index]?.trim() || "",
+              sort_order: question.sort_order ?? index + 1,
+            }))
+            .filter((response) => response.answer.length > 0);
+
+          return {
+            author_id: profile!.id,
+            recipient_id: selectedColleague,
+            situation: s.answers[0]?.trim() || "",
+            behaviour: s.answers[1]?.trim() || "",
+            impact: s.answers[2]?.trim() || "",
+            optional: s.answers[3]?.trim() || "",
+            responses,
+            is_anonymous: isAnonymous,
+          };
+        });
 
       if (rows.length === 0) {
         throw new Error("Please fill in at least one situation");
@@ -104,7 +141,7 @@ const GiveFeedback = () => {
       toast.success("Feedback submitted successfully!");
       setSelectedColleague("");
       setSituations([
-        { situation: "", behaviour: "", impact: "", optional: "" },
+        { answers: Array(questionCount).fill("") },
       ]);
       setIsAnonymous(true);
       queryClient.invalidateQueries({ queryKey: ["feedback"] });
@@ -116,10 +153,9 @@ const GiveFeedback = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const hasAtLeastOneValid = situations.some((s) => {
-      const requiredFields = ["situation", "behaviour", "impact", "optional"] as const;
-      return requiredFields.every((field) => {
-        if (!requiredMap[field]) return true;
-        return s[field].trim().length > 0;
+      return effectiveQuestions.every((question, index) => {
+        if (!question.is_required) return true;
+        return s.answers[index]?.trim().length > 0;
       });
     });
     if (!selectedColleague) {
@@ -134,20 +170,23 @@ const GiveFeedback = () => {
     submitMutation.mutate();
   };
 
-  const updateSituation = (index: number, field: "situation" | "behaviour" | "impact" | "optional", value: string) => {
-  setSituations((prev) =>
-    prev.map((item, i) =>
-      i === index ? { ...item, [field]: value } : item
-    )
-  );
-};
+  const updateSituation = (index: number, questionIndex: number, value: string) => {
+    setSituations((prev) =>
+      prev.map((item, i) => {
+        if (i !== index) return item;
+        const nextAnswers = [...item.answers];
+        nextAnswers[questionIndex] = value;
+        return { answers: nextAnswers };
+      }),
+    );
+  };
 
   const addSituation = () => {
-  setSituations((prev) => [
-    ...prev,
-    { situation: "", behaviour: "", impact: "", optional: "" },
-  ]);
-};
+    setSituations((prev) => [
+      ...prev,
+      { answers: Array(questionCount).fill("") },
+    ]);
+  };
 
   const removeSituation = (index: number) => {
     setSituations((prev) => prev.filter((_, i) => i !== index));
@@ -238,42 +277,15 @@ const GiveFeedback = () => {
                         </Button>
                       )}
                     </div>
-                    <div className="space-y-2">
-                      <Label className="text-xs font-normal text-foreground/80">{questionLabels[0]}</Label>
-                      <Textarea
-                        value={item.situation}
-                        onChange={(e) =>
-                          updateSituation(index, "situation", e.target.value)
-                        }
-                      />
-                    </div>
-                    <div className="space-y-2">
-                        <Label className="text-xs font-normal text-foreground/80">{questionLabels[1]}</Label>
+                    {questionLabels.map((label, questionIndex) => (
+                      <div key={`question-${index}-${questionIndex}`} className="space-y-2">
+                        <Label className="text-xs font-normal text-foreground/80">{label}</Label>
                         <Textarea
-                          value={item.behaviour}
-                          onChange={(e) =>
-                            updateSituation(index, "behaviour", e.target.value)
-                          }
+                          value={item.answers[questionIndex] || ""}
+                          onChange={(e) => updateSituation(index, questionIndex, e.target.value)}
                         />
-                    </div>
-                    <div className="space-y-2">
-                        <Label className="text-xs font-normal text-foreground/80">{questionLabels[2]}</Label>
-                        <Textarea
-                          value={item.impact}
-                          onChange={(e) =>
-                            updateSituation(index, "impact", e.target.value)
-                          }
-                        />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-xs font-normal text-foreground/80">{questionLabels[3]}</Label>
-                      <Textarea
-                        value={item.optional}
-                        onChange={(e) =>
-                          updateSituation(index, "optional", e.target.value)
-                        }
-                      />
-                    </div>
+                      </div>
+                    ))}
                 </div>
                 ))}
 

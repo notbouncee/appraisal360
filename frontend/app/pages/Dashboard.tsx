@@ -357,23 +357,33 @@ const Dashboard = () => {
 
                         {/* SBI Sections */}
                         <div className="space-y-4">
-                          {[
-                            { label: "Situation", value: item.situation },
-                            { label: "Behaviour", value: item.behaviour },
-                            { label: "Impact", value: item.impact },
-                            ...(item.optional
-                              ? [{ label: "Additional Comments", value: item.optional }]
-                              : []),
-                          ].map(({ label, value }) => (
-                            <div key={label}>
-                              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                                {label}
-                              </p>
-                              <p className="text-sm text-foreground leading-relaxed whitespace-pre-line">
-                                {value}
-                              </p>
-                            </div>
-                          ))}
+                          {(item.responses?.length
+                            ? item.responses.map((response) => ({
+                              label: response.label,
+                              value: response.answer,
+                              sort_order: response.sort_order ?? 0,
+                            }))
+                            : [
+                              { label: "Situation", value: item.situation, sort_order: 1 },
+                              { label: "Behaviour", value: item.behaviour, sort_order: 2 },
+                              { label: "Impact", value: item.impact, sort_order: 3 },
+                              ...(item.optional
+                                ? [{ label: "Additional Comments", value: item.optional, sort_order: 4 }]
+                                : []),
+                            ]
+                          )
+                            .filter((entry) => entry.value)
+                            .sort((a, b) => a.sort_order - b.sort_order)
+                            .map(({ label, value }) => (
+                              <div key={label}>
+                                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                                  {label}
+                                </p>
+                                <p className="text-sm text-foreground leading-relaxed whitespace-pre-line">
+                                  {value}
+                                </p>
+                              </div>
+                            ))}
                         </div>
                       </CardContent>
                     </Card>
