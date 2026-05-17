@@ -1,18 +1,11 @@
-import csv
-import json
-from io import StringIO
-
 from fastapi import HTTPException, status
 
-from src.repository.feedback_repository import FeedbackRepository
 from src.repository.user_repository import UserRepository
-from src.service.mapper.dto_mapper import rows_to_dicts
 
 
 class AdminService:
     def __init__(self) -> None:
         self.user_repo = UserRepository()
-        self.feedback_repo = FeedbackRepository()
 
     def _validate_password(self, password: str) -> None:
         if len(password) < 8:
@@ -45,53 +38,3 @@ class AdminService:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
         return updated
 
-    def export_feedback_csv(
-        self,
-        start_date: str | None,
-        end_date: str | None,
-        recipient_id: str | None,
-        author_id: str | None,
-        is_anonymous: bool | None,
-    ) -> str:
-        rows = self.feedback_repo.list_for_export(
-            start_date=start_date,
-            end_date=end_date,
-            recipient_id=recipient_id,
-            author_id=author_id,
-            is_anonymous=is_anonymous,
-        )
-        items = rows_to_dicts(rows)
-
-        output = StringIO()
-        writer = csv.writer(output)
-        writer.writerow(
-            [
-                "id",
-                "author_id",
-                "recipient_id",
-                "situation",
-                "behaviour",
-                "impact",
-                "optional",
-                "is_anonymous",
-                "created_at",
-                "responses",
-            ]
-        )
-        for item in items:
-            writer.writerow(
-                [
-                    item.get("id"),
-                    item.get("author_id"),
-                    item.get("recipient_id"),
-                    item.get("situation"),
-                    item.get("behaviour"),
-                    item.get("impact"),
-                    item.get("optional"),
-                    item.get("is_anonymous"),
-                    item.get("created_at"),
-                    json.dumps(item.get("responses") or []),
-                ]
-            )
-
-        return output.getvalue()

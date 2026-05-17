@@ -9,6 +9,14 @@ Current direction:
 - Database is PostgreSQL
 - Profile image storage is RustFS (S3-compatible)
 
+## Tech stack
+
+- Frontend: React 18, TypeScript, Vite, Node.js, Tailwind CSS, Radix UI, React Router, TanStack Query, React Hook Form, Zod, Sonner, Lucide
+- Backend: Python 3.11, FastAPI, Uvicorn, SQLAlchemy, Alembic, Pydantic Settings, Psycopg, Passlib, python-jose, Boto3
+- Database: PostgreSQL 16
+- Storage: RustFS (S3-compatible)
+- Tooling: Docker, Docker Compose, Vitest, ESLint
+
 ## New structure (scaffolded)
 
 ```text

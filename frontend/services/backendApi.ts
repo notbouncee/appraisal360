@@ -193,16 +193,6 @@ export async function forcePasswordChange(email: string): Promise<void> {
   await apiPost("/admin/users/force-password-change", { email }, true);
 }
 
-export async function exportFeedbackCsv(params: {
-  start_date?: string;
-  end_date?: string;
-  recipient_id?: string;
-  author_id?: string;
-  is_anonymous?: boolean;
-}): Promise<string> {
-  return apiGetText("/admin/feedback/export", params, true);
-}
-
 export async function getFeedbackCount(recipientId: string): Promise<number> {
   const response = await apiGet<{ count: number }>("/feedback/count", { recipient_id: recipientId });
   return response.count;

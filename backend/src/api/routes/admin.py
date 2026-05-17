@@ -1,5 +1,4 @@
-from fastapi import APIRouter, Depends, Query
-from fastapi.responses import Response
+from fastapi import APIRouter, Depends
 
 from src.api.schema.admin import AdminCreateUserRequest, ForcePasswordChangeRequest
 from src.api.schema.feedback_question import (
@@ -69,22 +68,3 @@ def create_user(payload: AdminCreateUserRequest, _: str = Depends(require_admin)
 def force_password_change(payload: ForcePasswordChangeRequest, _: str = Depends(require_admin)) -> dict:
     return admin_service.force_password_change(email=payload.email)
 
-
-@router.get("/feedback/export")
-def export_feedback(
-    start_date: str | None = Query(default=None),
-    end_date: str | None = Query(default=None),
-    recipient_id: str | None = Query(default=None),
-    author_id: str | None = Query(default=None),
-    is_anonymous: bool | None = Query(default=None),
-    _: str = Depends(require_admin),
-) -> Response:
-    csv_data = admin_service.export_feedback_csv(
-        start_date=start_date,
-        end_date=end_date,
-        recipient_id=recipient_id,
-        author_id=author_id,
-        is_anonymous=is_anonymous,
-    )
-    headers = {"Content-Disposition": "attachment; filename=feedback_export.csv"}
-    return Response(content=csv_data, media_type="text/csv", headers=headers)

@@ -13,7 +13,6 @@ import {
   createReviewCycle,
   deleteFeedbackQuestion,
   deleteReviewCycle,
-  exportFeedbackCsv,
   forcePasswordChange,
   listFeedbackQuestions,
   listReviewCycles,
@@ -62,14 +61,6 @@ const Admin = () => {
     team: "",
     role: "member",
     temp_password: "",
-  });
-
-  const [exportFilters, setExportFilters] = useState({
-    start_date: "",
-    end_date: "",
-    recipient_id: "",
-    author_id: "",
-    is_anonymous: "",
   });
 
   const [forceEmail, setForceEmail] = useState("");
@@ -329,28 +320,6 @@ const Admin = () => {
     }
   };
 
-  const handleExport = async () => {
-    try {
-      const csv = await exportFeedbackCsv({
-        start_date: exportFilters.start_date || undefined,
-        end_date: exportFilters.end_date || undefined,
-        recipient_id: exportFilters.recipient_id || undefined,
-        author_id: exportFilters.author_id || undefined,
-        is_anonymous: exportFilters.is_anonymous === "" ? undefined : exportFilters.is_anonymous === "true",
-      });
-      const blob = new Blob([csv], { type: "text/csv" });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = "feedback_export.csv";
-      link.click();
-      window.URL.revokeObjectURL(url);
-      toast.success("Export ready")
-    } catch (err: any) {
-      toast.error(err.message)
-    }
-  };
-
   const handleForcePassword = async () => {
     try {
       await forcePasswordChange(forceEmail);
@@ -366,7 +335,7 @@ const Admin = () => {
       <div className="space-y-8">
         <div>
           <h1 className="text-2xl font-bold">Admin Console</h1>
-          <p className="text-sm text-muted-foreground">Manage questions, review cycles, users, and exports.</p>
+          <p className="text-sm text-muted-foreground">Manage questions, review cycles, and users.</p>
         </div>
 
         <Card>
@@ -640,43 +609,6 @@ const Admin = () => {
               </div>
             </div>
             <Button onClick={handleCreateUser}>Create User</Button>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6 space-y-4">
-            <h2 className="text-lg font-semibold">Export Feedback</h2>
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
-              <div>
-                <Label>Start Date</Label>
-                <Input type="date" value={exportFilters.start_date} onChange={(e) => setExportFilters({ ...exportFilters, start_date: e.target.value })} />
-              </div>
-              <div>
-                <Label>End Date</Label>
-                <Input type="date" value={exportFilters.end_date} onChange={(e) => setExportFilters({ ...exportFilters, end_date: e.target.value })} />
-              </div>
-              <div>
-                <Label>Recipient ID</Label>
-                <Input value={exportFilters.recipient_id} onChange={(e) => setExportFilters({ ...exportFilters, recipient_id: e.target.value })} />
-              </div>
-              <div>
-                <Label>Author ID</Label>
-                <Input value={exportFilters.author_id} onChange={(e) => setExportFilters({ ...exportFilters, author_id: e.target.value })} />
-              </div>
-              <div>
-                <Label>Anonymous</Label>
-                <select
-                  className="w-full h-10 rounded-md border border-input bg-background px-3"
-                  value={exportFilters.is_anonymous}
-                  onChange={(e) => setExportFilters({ ...exportFilters, is_anonymous: e.target.value })}
-                >
-                  <option value="">All</option>
-                  <option value="true">Anonymous</option>
-                  <option value="false">Non-anonymous</option>
-                </select>
-              </div>
-            </div>
-            <Button onClick={handleExport}>Export CSV</Button>
           </CardContent>
         </Card>
 
