@@ -1,94 +1,87 @@
-# appraisal360
 
-A feedback system developed for internal usage for the Home Team Science and Technology Agency (HTX) Enterprise AI Products Team. 
+**Use your preferred IDE**
 
-## Direction
+If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
 
-Current direction:
+The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
 
-- Frontend remains React + Vite + TypeScript
-- Backend is FastAPI (Python)
-- Database is PostgreSQL
-- Profile image storage is RustFS (S3-compatible)
-
-## Tech stack
-
-- Frontend: React 18, TypeScript, Vite, Node.js, Tailwind CSS, Radix UI, React Router, TanStack Query, React Hook Form, Zod, Sonner, Lucide
-- Backend: Python 3.11, FastAPI, Uvicorn, SQLAlchemy, Alembic, Pydantic Settings, Psycopg, Passlib, python-jose, Boto3
-- Database: PostgreSQL 16
-- Storage: RustFS (S3-compatible)
-- Tooling: Docker, Docker Compose, Vitest, ESLint
-
-## Project structure (scaffolded)
-
-```text
-frontend/
-backend/
-database/
-```
-
-## Local setup (first implementation slice)
-
-1. Install frontend dependencies inside the frontend package:
+Follow these steps:
 
 ```sh
-cd frontend
+# Step 1: Clone the repository using the project's Git URL.
+git clone <YOUR_GIT_URL>
+
+# Step 2: Navigate to the project directory.
+cd <YOUR_PROJECT_NAME>
+
+# Step 3: Install the necessary dependencies.
 npm install
-```
 
-2. Prepare local env files:
-
-```sh
-cp database/postgresql/.env.example database/postgresql/.env
-cp database/rustfs/.env.example database/rustfs/.env
-cp backend/.env.example backend/.env
-cp backend/scripts/.env.example backend/scripts/.env
-cp frontend/.env.example frontend/.env
-```
-
-3. Start PostgreSQL and RustFS from the database package:
-
-```sh
-cd database
-uv sync
-cp postgresql/.env.example postgresql/.env
-cp rustfs/.env.example rustfs/.env
-make all
-```
-
-4. Start backend API:
-
-```sh
-cd backend
-uv sync
-cp .env.example .env
-cp scripts/.env.example scripts/.env
-uv run python scripts/seed_postgresql.py
-uv run fastapi run src/main.py --reload
-```
-
-5. Start frontend:
-
-```sh
-cd frontend
+# Step 4: Start the development server with auto-reloading and an instant preview.
 npm run dev
 ```
 
-See [backend/README.md](backend/README.md) for the repo-local backend install and run commands.
+## What technologies are used for this project?
 
-## Service commands
+This project is built with:
 
-- `cd database && make all` start PostgreSQL and RustFS
-- `cd database && make stop` stop services
-- `cd database && make restart` restart services
-- `cd database && make status` show service status
-- `cd database && make clean` stop and remove containers and volumes
-- `cd database && make seed` seed PostgreSQL
-- `cd database && make seed-creds` print seed credentials
+- Vite
+- TypeScript
+- React
+- shadcn-ui
+- Tailwind CSS
 
-## Notes
+## 1) Set up Figma MCP in VS Code
 
-- `supabase/` is still present for migration reference.
-- Frontend source lives under [frontend/](frontend/).
-- Backend now has its own local package and a Makefile in [backend/](backend/).
-- Database now has its own local package and Makefile in [database/](database/); its seed flow runs from the backend package via `uv run python scripts/seed_postgresql.py`.
+This project uses the Figma MCP server so Copilot can read design context directly from Figma.
+
+Option A: Manual config file
+
+Create or confirm this file exists:
+
+- `.vscode/mcp.json`
+
+Use this config:
+
+```json
+{
+	"servers": {
+		"figma": {
+			"url": "https://mcp.figma.com/mcp",
+			"type": "http"
+		}
+	},
+	"inputs": []
+}
+```
+
+Option B: Command Palette setup
+
+1. Open Command Palette (`Cmd+Shift+P`).
+2. Run an MCP server setup command (for example `MCP: Add Server`).
+3. Choose HTTP server type.
+4. Enter URL: `https://mcp.figma.com/mcp`.
+5. Name it `figma`.
+6. Save to workspace settings (`.vscode/mcp.json`).
+
+Then reload VS Code (`Developer: Reload Window`) so the MCP server is picked up.
+
+## 2) Use Figma MCP (select layer + provide URL)
+
+1. In Figma, select the layer/frame/component you want to implement.
+2. Copy the link to that selection (it must include `node-id`).
+3. In VS Code Copilot Chat, send the Figma URL and ask for design context or implementation.
+
+Example prompt:
+
+```text
+Use mcp_figma_get_design_context for this URL:
+https://www.figma.com/design/FILE_KEY/File-Name?node-id=332-330
+Then update my homepage to match it.
+```
+
+Tips:
+
+- If the URL has no `node-id`, re-copy the link from the selected layer in Figma.
+- You can target a different layer by selecting it and copying that layer URL again.
+- Keep using the same prompt style for faster design-to-code updates.
