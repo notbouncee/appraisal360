@@ -7,16 +7,26 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Node / frontend
 node_modules
 dist
 dist-ssr
+.vite
 *.local
+*.tsbuildinfo
+.eslintcache
+
+# Python
 .venv/
-backend/.venv/
-backend/*.egg-info/
-backend/scripts/.env
-backend/scripts/.venv/
-backend/scripts/*.egg-info/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
 
 # Editor directories and files
 .vscode/*
@@ -31,15 +41,11 @@ backend/scripts/*.egg-info/
 
 # Environment variables
 .env
-backend/.env
+.env.*
+backend/scripts/.env
 database/postgresql/.env
 database/rustfs/.env
 frontend/.env
-.venv/
-backend/.venv/
-backend/*.egg-info/
-database/.venv/
-database/*.egg-info/
 
 # Misc
 /supabase/.temp/
