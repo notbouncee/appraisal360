@@ -1,6 +1,8 @@
 # appraisal360
 
-Project restructure is in progress.
+A feedback system developed for internal usage for the Home Team Science and Technology Agency (HTX) Enterprise AI Products Team. 
+
+## Direction
 
 Current direction:
 
@@ -17,7 +19,7 @@ Current direction:
 - Storage: RustFS (S3-compatible)
 - Tooling: Docker, Docker Compose, Vitest, ESLint
 
-## New structure (scaffolded)
+## Project structure (scaffolded)
 
 ```text
 frontend/
