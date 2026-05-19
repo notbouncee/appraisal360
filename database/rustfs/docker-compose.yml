@@ -1,0 +1,22 @@
+services:
+  rustfs:
+    image: ${RUSTFS_IMAGE:-rustfs/rustfs:latest}
+    container_name: appraisal360-rustfs
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      RUSTFS_ACCESS_KEY: ${RUSTFS_ACCESS_KEY}
+      RUSTFS_SECRET_KEY: ${RUSTFS_SECRET_KEY}
+      RUSTFS_ROOT_USER: ${RUSTFS_ROOT_USER}
+      RUSTFS_ROOT_PASSWORD: ${RUSTFS_ROOT_PASSWORD}
+      RUSTFS_REGION: ${RUSTFS_REGION:-us-east-1}
+    command: ["server", "/data", "--console-address", ":9001"]
+    ports:
+      - "${RUSTFS_API_PORT:-9000}:9000"
+      - "${RUSTFS_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - rustfs-data:/data
+
+volumes:
+  rustfs-data:

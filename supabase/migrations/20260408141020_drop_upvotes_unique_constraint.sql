@@ -1,1 +1,0 @@
-ALTER TABLE public.upvotes DROP CONSTRAINT IF EXISTS upvotes_voter_id_upvoted_id_key;

@@ -11,6 +11,12 @@ node_modules
 dist
 dist-ssr
 *.local
+.venv/
+backend/.venv/
+backend/*.egg-info/
+backend/scripts/.env
+backend/scripts/.venv/
+backend/scripts/*.egg-info/
 
 # Editor directories and files
 .vscode/*
@@ -25,6 +31,15 @@ dist-ssr
 
 # Environment variables
 .env
+backend/.env
+database/postgresql/.env
+database/rustfs/.env
+frontend/.env
+.venv/
+backend/.venv/
+backend/*.egg-info/
+database/.venv/
+database/*.egg-info/
 
 # Misc
 /supabase/.temp/
