@@ -52,24 +52,24 @@ uv sync
 cp postgresql/.env.example postgresql/.env
 cp rustfs/.env.example rustfs/.env
 make all
-make seed
 ```
 
-4. Start frontend:
-
-```sh
-cd frontend
-npm run dev
-```
-
-5. Start backend API:
+4. Start backend API:
 
 ```sh
 cd backend
 uv sync
 cp .env.example .env
 cp scripts/.env.example scripts/.env
+uv run python scripts/seed_postgresql.py
 uv run fastapi run src/main.py --reload
+```
+
+5. Start frontend:
+
+```sh
+cd frontend
+npm run dev
 ```
 
 See [backend/README.md](backend/README.md) for the repo-local backend install and run commands.
